@@ -1,150 +1,139 @@
 # PortfolioLab
 
-A full-stack web application for building, testing, and analyzing investment portfolios using historical market data.
-
-![Next.js](https://img.shields.io/badge/Next.js-13.5-black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
-![Prisma](https://img.shields.io/badge/Prisma-5.22-2D3748)
-![License](https://img.shields.io/badge/License-MIT-green)
+A portfolio backtesting and analysis application for constructing portfolios from historical market data, running historical simulations, and evaluating performance metrics.
 
 ## Overview
 
-PortfolioLab helps you answer the question: **"If I had invested in this portfolio under these assumptions, how would it have performed over time?"**
+PortfolioLab enables historical portfolio simulation using uploaded price data. Users define portfolios with asset allocations, configure backtest parameters, and analyze performance over specified date ranges.
 
-Upload your historical price data, define custom portfolios with asset weights, configure rebalance rules, run backtests, and inspect performance metrics — all in a clean, intuitive interface.
+## Core Functionality
 
-## Features
-
-- **📊 Dataset Management** — Upload CSV files with historical price data, preview before importing, and validate automatically
-- **💼 Portfolio Builder** — Create portfolios by selecting assets and assigning weights with 100% validation
-- **📈 Backtesting Engine** — Run simulations with configurable date ranges, rebalance frequencies (none/monthly/quarterly), and initial capital
-- **📉 Performance Analytics** — View cumulative returns, drawdowns, volatility, Sharpe ratio, and more
-- **🔄 Strategy Comparison** — Compare multiple portfolios side-by-side to find the best approach
+- **Dataset Import**: Upload CSV files containing historical price data with validation
+- **Portfolio Construction**: Define portfolios by selecting assets and assigning weights
+- **Backtesting**: Run historical simulations with configurable date ranges, rebalance frequencies, and initial capital
+- **Performance Analysis**: View cumulative returns, drawdown series, volatility, Sharpe ratio, and summary statistics
+- **Portfolio Comparison**: Compare multiple backtest runs on shared charts
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 13, React 18, TypeScript, Tailwind CSS |
-| Backend | Next.js API Routes, NextAuth.js |
-| Database | SQLite (development), PostgreSQL (production) |
-| ORM | Prisma |
+| Framework | Next.js 13.5 (App Router) |
+| Language | TypeScript 5.7 |
+| Styling | Tailwind CSS |
+| Database | SQLite via Prisma ORM |
 | Validation | Zod |
 | Charts | Recharts |
+| Testing | Vitest |
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn
-
-### Installation
+## Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/moleh1307/portfoliolab.git
+git clone git@github.com:moleh1307/portfoliolab.git
 cd portfoliolab
-
-# Install dependencies
 npm install
+```
 
-# Set up environment variables
-cp .env.example .env
+## Environment Setup
 
-# Initialize the database
+Initialize the SQLite database:
+
+```bash
 npm run db:push
+```
 
-# Start the development server
+The database is stored locally as `prisma/dev.db`.
+
+## Running Locally
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open http://localhost:3000.
 
-### CSV Format
+## Input Data Format
 
-Your CSV files should include these columns:
+PortfolioLab accepts CSV files with the following columns:
 
 | Column | Type | Required | Description |
 |--------|------|----------|-------------|
-| `date` | string | ✅ | Format: YYYY-MM-DD |
-| `symbol` | string | ✅ | Asset ticker (e.g., AAPL, SPY) |
-| `close` | number | ✅ | Closing price |
-| `open` | number | ❌ | Opening price |
-| `high` | number | ❌ | Highest price |
-| `low` | number | ❌ | Lowest price |
-| `volume` | number | ❌ | Trading volume |
+| `date` | string | Yes | ISO date format (YYYY-MM-DD) |
+| `symbol` | string | Yes | Asset ticker (e.g., AAPL, SPY) |
+| `close` | number | Yes | Closing price |
+| `open` | number | No | Opening price |
+| `high` | number | No | Daily high |
+| `low` | number | No | Daily low |
+| `volume` | number | No | Trading volume |
 
 Example:
+
 ```csv
 date,symbol,close
-2024-01-01,AAPL,185.50
-2024-01-02,AAPL,186.75
-2024-01-03,SPY,475.20
+2024-01-02,AAPL,185.50
+2024-01-02,MSFT,375.20
+2024-01-03,AAPL,186.75
+2024-01-03,MSFT,377.10
 ```
+
+The CSV parser validates all rows and reports specific errors for invalid entries.
 
 ## Project Structure
 
 ```
 portfoliolab/
-├── app/                    # Next.js App Router pages
-│   ├── (auth)/            # Authentication pages
-│   ├── (dashboard)/        # Protected dashboard pages
-│   └── api/               # API routes
-├── components/            # Reusable UI components
-│   └── ui/                # Base components (Button, Card, Input...)
-├── features/              # Feature modules
-│   ├── auth/
-│   ├── datasets/
-│   ├── portfolios/
-│   └── backtests/
-├── lib/                   # Core utilities
-│   ├── analytics/         # Portfolio analytics engine
+├── app/
+│   ├── (dashboard)/        # Main application pages
+│   │   ├── datasets/
+│   │   ├── portfolios/
+│   │   ├── backtests/
+│   │   └── comparison/
+│   └── api/               # REST API routes
+├── components/
+│   ├── charts/            # Recharts-based chart components
+│   └── ui/                # Base UI components
+├── lib/
+│   ├── analytics/         # Backtest computation engine
 │   ├── csv/               # CSV parsing and validation
-│   └── db/                # Database client
-├── prisma/                # Database schema
-└── tests/                 # Unit and integration tests
+│   ├── db/                # Prisma client singleton
+│   └── validators/        # Portfolio validation logic
+├── prisma/
+│   └── schema.prisma      # Database schema (8 models)
+└── tests/                 # Unit tests (35 tests)
 ```
 
-## Development
+## Development Commands
 
-```bash
-# Run type checking
-npm run typecheck
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run typecheck` | Run TypeScript type checking |
+| `npm run lint` | Run ESLint |
+| `npx vitest run` | Execute unit tests |
+| `npm run db:studio` | Open Prisma Studio |
 
-# Run linting
-npm run lint
+## Testing
 
-# Run tests
-npm test
+The project includes 35 unit tests covering core logic:
 
-# Build for production
-npm run build
+- CSV parser and validation (`tests/csv-parser.test.ts`)
+- Portfolio weight validation (`tests/portfolio-validators.test.ts`)
+- Backtest engine computation (`tests/analytics-engine.test.ts`)
 
-# Open Prisma Studio
-npm run db:studio
-```
+## Current Status
 
-## Roadmap
+All six phases are complete:
 
-- [x] Phase 1: Repository foundation with auth and UI shell
-- [x] Phase 2: Dataset import with CSV validation
-- [ ] Phase 3: Portfolio builder with weight validation
-- [ ] Phase 4: Backtest engine with analytics
-- [ ] Phase 5: Results dashboard with charts
-- [ ] Phase 6: Comparison and polish
+- Phase 1: Repository foundation and database schema
+- Phase 2: Dataset import with CSV validation
+- Phase 3: Portfolio builder with weight validation
+- Phase 4: Backtest engine with analytics
+- Phase 5: Results dashboard with charts
+- Phase 6: Portfolio comparison
 
-## Architecture Principles
-
-- **Correctness over speed** — The analytics engine is isolated and fully testable
-- **Fail clearly, not mysteriously** — Validation errors are specific and actionable
-- **Clean separation** — Business logic never lives in UI components
-- **Modular design** — Each feature has clear boundaries
+The application runs locally without authentication.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT License
