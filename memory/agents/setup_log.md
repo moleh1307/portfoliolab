@@ -38,3 +38,48 @@ Phase 1: Repository foundation setup for PortfolioLab
 
 ## Next Task
 Phase 2: Implement dataset upload flow with CSV validation and preview
+
+---
+
+# Agent Log - Phase 2: Dataset Import
+
+## Date: 2026-04-15
+
+## Task
+Phase 2: Dataset import - CSV upload flow, validation, preview
+
+## Status: ✅ COMPLETE
+
+## Actions Taken
+1. Created CSV parser utility at `lib/csv/parser.ts`
+   - parseCSV function with validation
+   - Zod schemas for PriceRow
+   - groupRowsBySymbol helper
+   - getDateRange helper
+2. Created unit tests in `tests/csv-parser.test.ts` (12 tests)
+3. Verified tests pass with `npx vitest run`
+4. Created dataset API routes:
+   - GET/POST `/api/datasets` - list and create datasets
+   - GET/DELETE `/api/datasets/[id]` - get/delete single dataset
+   - POST `/api/datasets/import` - import CSV data
+5. Created datasets page UI with:
+   - File upload component
+   - CSV preview table
+   - Validation error display
+   - Import status feedback
+
+## Verification
+- `npx vitest run tests/csv-parser.test.ts` - 12 tests passing
+- `npm run typecheck` - passes
+- `npm run build` - passes
+
+## Files Changed
+- `lib/csv/parser.ts` (new)
+- `tests/csv-parser.test.ts` (new)
+- `app/api/datasets/route.ts` (new)
+- `app/api/datasets/[id]/route.ts` (new)
+- `app/api/datasets/import/route.ts` (new)
+- `app/(dashboard)/datasets/page.tsx` (updated)
+
+## Next Task
+Phase 3: Portfolio builder (create/edit/delete portfolios, weight assignment)

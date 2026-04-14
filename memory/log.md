@@ -22,11 +22,18 @@
 - Node.js 18.16.0 is the environment version
 
 ## Next Steps
-- Phase 2: Dataset import (CSV upload flow, validation, preview)
+- Phase 2: Dataset import (CSV upload flow, validation, preview) - IN PROGRESS
 - Phase 3: Portfolio builder (create/edit/delete portfolios, weight assignment)
 - Phase 4: Backtest engine (core analytics logic, computation path)
 - Phase 5: Results dashboard (charts, metrics)
 - Phase 6: Comparison and polish
+
+## Phase 2 Progress
+- [x] CSV parser utility (`lib/csv/parser.ts`)
+- [x] Unit tests for CSV parser (12 tests passing)
+- [x] Dataset API routes (GET, POST, DELETE)
+- [x] Dataset import API route (`/api/datasets/import`)
+- [x] Datasets page UI with upload, preview, and validation
 
 ## Key Files
 - `prisma/schema.prisma` - Database schema

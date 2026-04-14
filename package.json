@@ -13,31 +13,31 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
     "next": "13.5.7",
+    "next-auth": "^4.24.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@prisma/client": "^5.22.0",
-    "next-auth": "^4.24.10",
-    "bcryptjs": "^2.4.3",
-    "zod": "^3.23.8",
     "recharts": "^2.14.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.5"
+    "tailwind-merge": "^2.5.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.17.9",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@types/bcryptjs": "^2.4.6",
-    "typescript": "^5.7.2",
+    "@vitest/ui": "^2.1.9",
+    "autoprefixer": "^10.4.20",
     "eslint": "^8.57.0",
     "eslint-config-next": "13.5.7",
-    "tailwindcss": "^3.4.16",
+    "jsdom": "^25.0.1",
     "postcss": "^8.4.49",
-    "autoprefixer": "^10.4.20",
     "prisma": "^5.22.0",
-    "vitest": "^2.1.8",
-    "@vitest/ui": "^2.1.8",
-    "jsdom": "^25.0.1"
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
   }
 }
