@@ -8,8 +8,25 @@ const createDatasetSchema = z.object({
   fileName: z.string().min(1, 'File name is required'),
 });
 
+async function ensureLocalUser() {
+  const user = await prisma.user.findUnique({
+    where: { id: DEFAULT_USER_ID },
+  });
+  if (!user) {
+    await prisma.user.create({
+      data: {
+        id: DEFAULT_USER_ID,
+        email: 'local@localhost',
+        password: 'local',
+        name: 'Local User',
+      },
+    });
+  }
+}
+
 export async function GET() {
   try {
+    await ensureLocalUser();
     const datasets = await prisma.dataset.findMany({
       where: { userId: DEFAULT_USER_ID },
       include: {
@@ -38,6 +55,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await ensureLocalUser();
     const body = await request.json();
     const validation = createDatasetSchema.safeParse(body);
 

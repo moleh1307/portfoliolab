@@ -19,34 +19,52 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-8">
-            <Link href="/datasets" className="text-xl font-bold">
-              PortfolioLab
-            </Link>
-            <nav className="flex gap-1">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                    pathname === item.href || pathname.startsWith(item.href + '/')
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <div className="mx-auto max-w-6xl px-5">
+          <div className="flex h-[52px] items-center justify-between">
+            <div className="flex items-center gap-8">
+              <Link
+                href="/datasets"
+                className="flex items-center gap-2"
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded-[3px] bg-foreground">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1 9L4 3L7 7L10 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span className="text-[13px] font-semibold tracking-tight text-foreground">
+                  PortfolioLab
+                </span>
+              </Link>
+              <nav className="flex items-center">
+                {navigation.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'relative px-3 py-[14px] text-[13px] font-medium transition-colors duration-150',
+                        isActive
+                          ? 'text-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      {item.name}
+                      {isActive && (
+                        <span className="absolute bottom-0 inset-x-3 h-[1.5px] bg-foreground rounded-full" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
           </div>
         </div>
       </header>
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">{children}</div>
+        <div className="mx-auto max-w-6xl px-5 py-8">{children}</div>
       </main>
     </div>
   );

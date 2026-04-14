@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ComparisonChart } from '@/components/charts/comparison-chart';
 
 interface Backtest {
@@ -30,7 +30,7 @@ interface SummaryMetrics {
   numberOfObservations: number;
 }
 
-const CHART_COLORS = ['#2563eb', '#059669', '#dc2626', '#7c3aed', '#d97706'];
+const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export default function ComparisonPage() {
   const [backtests, setBacktests] = useState<Backtest[]>([]);
@@ -106,199 +106,131 @@ export default function ComparisonPage() {
     color: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
+  const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => string; className?: string | ((m: SummaryMetrics) => string) }[] = [
+    { key: 'totalReturn', label: 'Total Return', format: (m) => `${(m.totalReturn * 100).toFixed(2)}%`, className: (m: SummaryMetrics) => m.totalReturn >= 0 ? 'text-positive' : 'text-negative' },
+    { key: 'annualizedReturn', label: 'Annualized Return', format: (m) => `${(m.annualizedReturn * 100).toFixed(2)}%`, className: (m: SummaryMetrics) => m.annualizedReturn >= 0 ? 'text-positive' : 'text-negative' },
+    { key: 'annualizedVolatility', label: 'Annualized Volatility', format: (m) => `${(m.annualizedVolatility * 100).toFixed(2)}%` },
+    { key: 'sharpeRatio', label: 'Sharpe Ratio', format: (m) => m.sharpeRatio.toFixed(2) },
+    { key: 'maxDrawdown', label: 'Max Drawdown', format: (m) => `${(m.maxDrawdown * 100).toFixed(2)}%`, className: 'text-negative' },
+    { key: 'bestDay', label: 'Best Day', format: (m) => `+${(m.bestDay * 100).toFixed(2)}%`, className: 'text-positive' },
+    { key: 'worstDay', label: 'Worst Day', format: (m) => `${(m.worstDay * 100).toFixed(2)}%`, className: 'text-negative' },
+    { key: 'observations', label: 'Observations', format: (m) => m.numberOfObservations.toLocaleString(), className: 'text-muted-foreground' },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Compare Backtests</h1>
-        <p className="text-muted-foreground">
-          Select multiple backtests to compare their performance
-        </p>
+    <div>
+      <div className="page-header mb-8">
+        <div>
+          <h1 className="page-title">Compare</h1>
+          <p className="page-description">
+            Compare performance across multiple backtests side by side.
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Backtests</CardTitle>
-          <CardDescription>Choose 2 or more backtests to compare</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : backtests.length === 0 ? (
-            <p className="text-muted-foreground">
-              No backtests yet. Run some backtests first.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {backtests.map((backtest) => {
-                const isSelected = selectedIds.includes(backtest.id);
-                return (
-                  <Button
-                    key={backtest.id}
-                    variant={isSelected ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => toggleBacktest(backtest.id)}
-                  >
-                    {backtest.portfolio.name}
-                  </Button>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {selectedBacktests.length >= 2 && (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance Comparison</CardTitle>
-              <CardDescription>Cumulative returns over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ComparisonChart data={chartData()} lines={chartLines} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Metrics Comparison</CardTitle>
-              <CardDescription>Side-by-side performance metrics</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-2">Metric</th>
-                      {selectedBacktests.map((bt) => (
-                        <th
-                          key={bt.id}
-                          className="text-right py-3 px-2"
-                          style={{
-                            color: CHART_COLORS[selectedBacktests.indexOf(bt) % CHART_COLORS.length],
-                          }}
-                        >
-                          {bt.portfolio.name}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Total Return</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td
-                            key={bt.id}
-                            className={`py-2 px-2 text-right ${
-                              (metrics?.totalReturn || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {metrics ? `${(metrics.totalReturn * 100).toFixed(2)}%` : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Annualized Return</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td
-                            key={bt.id}
-                            className={`py-2 px-2 text-right ${
-                              (metrics?.annualizedReturn || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
-                            {metrics ? `${(metrics.annualizedReturn * 100).toFixed(2)}%` : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Annualized Volatility</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td key={bt.id} className="py-2 px-2 text-right">
-                            {metrics ? `${(metrics.annualizedVolatility * 100).toFixed(2)}%` : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Sharpe Ratio</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td key={bt.id} className="py-2 px-2 text-right">
-                            {metrics ? metrics.sharpeRatio.toFixed(2) : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Max Drawdown</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td key={bt.id} className="py-2 px-2 text-right text-red-600">
-                            {metrics ? `${(metrics.maxDrawdown * 100).toFixed(2)}%` : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Best Day</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td key={bt.id} className="py-2 px-2 text-right text-green-600">
-                            {metrics ? `${(metrics.bestDay * 100).toFixed(2)}%` : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2 px-2 font-medium">Worst Day</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td key={bt.id} className="py-2 px-2 text-right text-red-600">
-                            {metrics ? `${(metrics.worstDay * 100).toFixed(2)}%` : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr>
-                      <td className="py-2 px-2 font-medium">Observations</td>
-                      {selectedBacktests.map((bt) => {
-                        const metrics = formatMetrics(bt.summaryMetrics);
-                        return (
-                          <td key={bt.id} className="py-2 px-2 text-right">
-                            {metrics ? metrics.numberOfObservations.toLocaleString() : '-'}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {selectedBacktests.length > 0 && selectedBacktests.length < 2 && (
+      <div className="space-y-6">
         <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">
-              Select at least 2 backtests to compare
-            </p>
+          <CardHeader>
+            <CardTitle>Select Backtests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex gap-2">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-7 w-24 rounded-md bg-muted/50 animate-pulse-subtle" />
+                ))}
+              </div>
+            ) : backtests.length === 0 ? (
+              <p className="text-[13px] text-muted-foreground">
+                No backtests available. Run some backtests first.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {backtests.map((backtest) => {
+                  const isSelected = selectedIds.includes(backtest.id);
+                  return (
+                    <button
+                      key={backtest.id}
+                      onClick={() => toggleBacktest(backtest.id)}
+                      className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition-all duration-150 border ${
+                        isSelected
+                          ? 'bg-foreground text-background border-foreground'
+                          : 'bg-transparent text-foreground border-border hover:bg-muted'
+                      }`}
+                    >
+                      {backtest.portfolio.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
-      )}
+
+        {selectedBacktests.length >= 2 && (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle>Cumulative Returns</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ComparisonChart data={chartData()} lines={chartLines} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Metrics Comparison</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="table-header text-left py-2.5 pr-6">Metric</th>
+                        {selectedBacktests.map((bt, index) => (
+                          <th
+                            key={bt.id}
+                            className="table-header text-right py-2.5 pl-4 font-mono"
+                            style={{ color: CHART_COLORS[index % CHART_COLORS.length] }}
+                          >
+                            {bt.portfolio.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metricsRows.map((row) => (
+                        <tr key={row.key} className="border-b border-border/40 last:border-0">
+                          <td className="py-2 text-[13px] font-medium">{row.label}</td>
+                          {selectedBacktests.map((bt) => {
+                            const metrics = formatMetrics(bt.summaryMetrics);
+                            if (!metrics) return <td key={bt.id} className="py-2 text-right font-mono text-xs tabular-nums">-</td>;
+                            const cellClass = typeof row.className === 'function' ? row.className(metrics) : (row.className || '');
+                            return (
+                              <td key={bt.id} className={`py-2 text-right font-mono text-xs tabular-nums ${cellClass}`}>
+                                {row.format(metrics)}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {selectedBacktests.length > 0 && selectedBacktests.length < 2 && (
+          <div className="rounded-lg border border-dashed border-border py-16 text-center">
+            <p className="text-[13px] text-muted-foreground">
+              Select at least 2 backtests to compare
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

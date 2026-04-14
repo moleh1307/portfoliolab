@@ -5,7 +5,6 @@ import {
   Area,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
@@ -16,31 +15,50 @@ interface DrawdownChartProps {
 
 export function DrawdownChart({ data }: DrawdownChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <AreaChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+    <ResponsiveContainer width="100%" height={260}>
+      <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
+        <defs>
+          <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.12} />
+            <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.01} />
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey="date"
-          tick={{ fontSize: 12 }}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => {
             const date = new Date(value);
             return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
           }}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+          width={44}
         />
         <Tooltip
-          labelFormatter={(value) => new Date(value).toLocaleDateString()}
+          contentStyle={{
+            backgroundColor: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '6px',
+            boxShadow: '0 2px 8px rgb(0 0 0 / 0.06)',
+            fontSize: '12px',
+            fontFamily: "'IBM Plex Mono', monospace",
+          }}
+          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 500, fontFamily: 'Inter, sans-serif', fontSize: '11px' }}
+          labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           formatter={(value: number) => [`${(value * 100).toFixed(2)}%`, 'Drawdown']}
         />
         <Area
           type="monotone"
           dataKey="drawdown"
-          stroke="#dc2626"
-          fill="#fef2f2"
-          strokeWidth={2}
+          stroke="hsl(var(--chart-3))"
+          strokeWidth={1.5}
+          fill="url(#drawdownGradient)"
         />
       </AreaChart>
     </ResponsiveContainer>

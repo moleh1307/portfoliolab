@@ -5,7 +5,6 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
@@ -16,31 +15,45 @@ interface PortfolioValueChartProps {
 
 export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
         <XAxis
           dataKey="date"
-          tick={{ fontSize: 12 }}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => {
             const date = new Date(value);
             return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
           }}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value) => `$${value.toLocaleString()}`}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
+          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+          width={48}
         />
         <Tooltip
-          labelFormatter={(value) => new Date(value).toLocaleDateString()}
-          formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Portfolio Value']}
+          contentStyle={{
+            backgroundColor: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '6px',
+            boxShadow: '0 2px 8px rgb(0 0 0 / 0.06)',
+            fontSize: '12px',
+            fontFamily: "'IBM Plex Mono', monospace",
+          }}
+          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 500, fontFamily: 'Inter, sans-serif', fontSize: '11px' }}
+          labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Value']}
         />
         <Line
           type="monotone"
           dataKey="value"
-          stroke="#2563eb"
-          strokeWidth={2}
+          stroke="hsl(var(--chart-1))"
+          strokeWidth={1.5}
           dot={false}
+          activeDot={{ r: 3, fill: 'hsl(var(--chart-1))', strokeWidth: 0 }}
         />
       </LineChart>
     </ResponsiveContainer>

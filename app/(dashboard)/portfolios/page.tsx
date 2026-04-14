@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { validateWeights, parseWeightInput } from '@/lib/validators/portfolio';
 
 interface Asset {
@@ -134,9 +134,9 @@ export default function PortfoliosPage() {
         throw new Error(data.error || 'Failed to save portfolio');
       }
 
-      setFormSuccess(editingId ? 'Portfolio updated!' : 'Portfolio created!');
+      setFormSuccess(editingId ? 'Portfolio updated' : 'Portfolio created');
       fetchPortfolios();
-      setTimeout(resetForm, 1000);
+      setTimeout(resetForm, 1200);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Failed to save portfolio');
     }
@@ -156,7 +156,7 @@ export default function PortfoliosPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this portfolio?')) return;
+    if (!confirm('Delete this portfolio?')) return;
 
     try {
       const response = await fetch(`/api/portfolios/${id}`, {
@@ -174,12 +174,12 @@ export default function PortfoliosPage() {
   const weightValid = Math.abs(totalWeight - 100) < 0.01;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="page-header mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Portfolios</h1>
-          <p className="text-muted-foreground">
-            Create and manage your portfolio configurations
+          <h1 className="page-title">Portfolios</h1>
+          <p className="page-description">
+            Define portfolio allocations by selecting assets and assigning target weights.
           </p>
         </div>
         {!showForm && (
@@ -189,195 +189,191 @@ export default function PortfoliosPage() {
         )}
       </div>
 
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingId ? 'Edit Portfolio' : 'Create Portfolio'}</CardTitle>
-            <CardDescription>
-              Select assets and assign weights. Weights must sum to 100%.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Portfolio Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Balanced Growth"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  required
-                />
-              </div>
+      <div className="space-y-6">
+        {showForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{editingId ? 'Edit Portfolio' : 'New Portfolio'}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g. Balanced Growth"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      required
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Input
-                  id="description"
-                  placeholder="Brief description of this portfolio strategy"
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                />
-              </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      placeholder="Optional description"
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Holdings</Label>
-                <div className="rounded-md border p-4 space-y-3">
-                  {holdings.map((holding) => {
-                    const asset = assets.find((a) => a.id === holding.assetId);
-                    return (
-                      <div key={holding.assetId} className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <span className="font-medium">{asset?.symbol}</span>
-                          {asset?.displayName && (
-                            <span className="text-muted-foreground ml-2">
-                              {asset.displayName}
-                            </span>
-                          )}
+                <div className="space-y-2">
+                  <Label>Holdings</Label>
+                  <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2.5">
+                    {holdings.map((holding) => {
+                      const asset = assets.find((a) => a.id === holding.assetId);
+                      return (
+                        <div key={holding.assetId} className="flex items-center justify-between gap-3">
+                          <span className="text-[13px] font-mono font-medium">{asset?.symbol}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="relative">
+                              <Input
+                                type="text"
+                                placeholder="0"
+                                className="w-[72px] text-right font-mono tabular-nums pr-7"
+                                value={holding.weight || ''}
+                                onChange={(e) =>
+                                  handleWeightChange(holding.assetId, e.target.value)
+                                }
+                              />
+                              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">%</span>
+                            </div>
+                            <button
+                              type="button"
+                              className="text-[11px] text-muted-foreground hover:text-negative transition-colors"
+                              onClick={() => handleRemoveAsset(holding.assetId)}
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="text"
-                            placeholder="0"
-                            className="w-24 text-right"
-                            value={holding.weight || ''}
-                            onChange={(e) =>
-                              handleWeightChange(holding.assetId, e.target.value)
-                            }
-                          />
-                          <span className="text-muted-foreground">%</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveAsset(holding.assetId)}
-                        >
-                          Remove
-                        </Button>
+                      );
+                    })}
+
+                    {holdings.length === 0 && (
+                      <p className="text-[13px] text-muted-foreground text-center py-4">
+                        Add assets from below to build your allocation.
+                      </p>
+                    )}
+
+                    {holdings.length > 0 && (
+                      <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                        <span className="text-[13px] font-medium">Total</span>
+                        <span className={`text-[13px] font-mono font-semibold tabular-nums ${
+                          weightValid ? 'text-positive' : 'text-negative'
+                        }`}>
+                          {totalWeight.toFixed(2)}%
+                        </span>
                       </div>
-                    );
-                  })}
+                    )}
 
-                  {holdings.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-2">
-                      No holdings added yet. Select assets below.
-                    </p>
-                  )}
-
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">Total:</span>
-                      <span
-                        className={`text-sm font-bold ${
-                          weightValid ? 'text-green-600' : 'text-destructive'
-                        }`}
-                      >
-                        {totalWeight.toFixed(2)}%
-                      </span>
-                    </div>
                     {!weightValid && holdings.length > 0 && (
-                      <span className="text-sm text-destructive">
+                      <p className="text-[11px] text-negative text-right">
                         Weights must sum to 100%
-                      </span>
+                      </p>
                     )}
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label>Available Assets</Label>
-                <div className="flex flex-wrap gap-2">
-                  {assets
-                    .filter((a) => !holdings.some((h) => h.assetId === a.id))
-                    .map((asset) => (
-                      <Button
-                        key={asset.id}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddAsset(asset.id)}
-                      >
-                        + {asset.symbol}
-                      </Button>
-                    ))}
-                  {assets.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No assets available. Upload a dataset first.
-                    </p>
-                  )}
+                <div className="space-y-1.5">
+                  <Label>Available Assets</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {assets
+                      .filter((a) => !holdings.some((h) => h.assetId === a.id))
+                      .map((asset) => (
+                        <Button
+                          key={asset.id}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="font-mono text-[11px]"
+                          onClick={() => handleAddAsset(asset.id)}
+                        >
+                          + {asset.symbol}
+                        </Button>
+                      ))}
+                    {assets.length === 0 && (
+                      <p className="text-[13px] text-muted-foreground">
+                        No assets available. Upload a dataset first.
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {formError && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  {formError}
+                {formError && (
+                  <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
+                    {formError}
+                  </div>
+                )}
+
+                {formSuccess && (
+                  <div className="rounded-md bg-positive/5 border border-positive/15 px-3 py-2.5 text-[13px] text-positive">
+                    {formSuccess}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <Button type="submit" disabled={holdings.length === 0 || !weightValid}>
+                    {editingId ? 'Update' : 'Create'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Cancel
+                  </Button>
                 </div>
-              )}
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-              {formSuccess && (
-                <div className="rounded-md bg-green-600/10 p-3 text-sm text-green-600">
-                  {formSuccess}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button type="submit" disabled={holdings.length === 0 || !weightValid}>
-                  {editingId ? 'Update Portfolio' : 'Create Portfolio'}
-                </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Portfolios</CardTitle>
-          <CardDescription>Previously created portfolios</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <div>
+          <h2 className="section-title mb-3">Your Portfolios</h2>
           {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <div className="space-y-2">
+              {[1, 2].map(i => (
+                <div key={i} className="h-16 rounded-lg border border-border animate-pulse-subtle bg-muted/30" />
+              ))}
+            </div>
           ) : portfolios.length === 0 && !showForm ? (
-            <p className="text-muted-foreground">
-              No portfolios yet. Create your first portfolio above.
-            </p>
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
+              <p className="text-[13px] text-muted-foreground">No portfolios yet. Create your first portfolio above.</p>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {portfolios.map((portfolio) => (
                 <div
                   key={portfolio.id}
-                  className="flex items-start justify-between rounded-lg border p-4"
+                  className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30"
                 >
-                  <div className="space-y-1">
-                    <h4 className="font-medium">{portfolio.name}</h4>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[13px] font-medium">{portfolio.name}</h3>
                     {portfolio.description && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground mt-0.5 max-w-md truncate">
                         {portfolio.description}
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-2 pt-2">
+                    <div className="flex flex-wrap gap-1 mt-2">
                       {portfolio.holdings.map((h) => (
                         <span
                           key={h.assetId}
-                          className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium"
+                          className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono"
                         >
-                          {h.asset?.symbol}: {h.weight}%
+                          <span className="font-medium">{h.asset?.symbol}</span>
+                          <span className="text-muted-foreground">{h.weight}%</span>
                         </span>
                       ))}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(portfolio)}>
+                  <div className="flex gap-1.5 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(portfolio)}>
                       Edit
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
+                      className="text-muted-foreground hover:text-negative"
                       onClick={() => handleDelete(portfolio.id)}
                     >
                       Delete
@@ -387,8 +383,8 @@ export default function PortfoliosPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

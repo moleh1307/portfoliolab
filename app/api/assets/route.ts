@@ -2,8 +2,25 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { DEFAULT_USER_ID } from '@/lib/constants';
 
+async function ensureLocalUser() {
+  const user = await prisma.user.findUnique({
+    where: { id: DEFAULT_USER_ID },
+  });
+  if (!user) {
+    await prisma.user.create({
+      data: {
+        id: DEFAULT_USER_ID,
+        email: 'local@localhost',
+        password: 'local',
+        name: 'Local User',
+      },
+    });
+  }
+}
+
 export async function GET() {
   try {
+    await ensureLocalUser();
     const assets = await prisma.asset.findMany({
       where: { userId: DEFAULT_USER_ID },
       select: {

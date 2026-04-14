@@ -5,9 +5,9 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 
 interface CumulativeReturnChartProps {
@@ -16,31 +16,46 @@ interface CumulativeReturnChartProps {
 
 export function CumulativeReturnChart({ data }: CumulativeReturnChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+    <ResponsiveContainer width="100%" height={260}>
+      <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
         <XAxis
           dataKey="date"
-          tick={{ fontSize: 12 }}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => {
             const date = new Date(value);
             return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
           }}
         />
         <YAxis
-          tick={{ fontSize: 12 }}
-          tickFormatter={(value) => `${(value * 100).toFixed(1)}%`}
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
+          tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+          width={44}
         />
         <Tooltip
-          labelFormatter={(value) => new Date(value).toLocaleDateString()}
-          formatter={(value: number) => [`${(value * 100).toFixed(2)}%`, 'Cumulative Return']}
+          contentStyle={{
+            backgroundColor: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: '6px',
+            boxShadow: '0 2px 8px rgb(0 0 0 / 0.06)',
+            fontSize: '12px',
+            fontFamily: "'IBM Plex Mono', monospace",
+          }}
+          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 500, fontFamily: 'Inter, sans-serif', fontSize: '11px' }}
+          labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          formatter={(value: number) => [`${(value * 100).toFixed(2)}%`, 'Return']}
         />
+        <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
         <Line
           type="monotone"
           dataKey="cumulativeReturn"
-          stroke="#059669"
-          strokeWidth={2}
+          stroke="hsl(var(--chart-2))"
+          strokeWidth={1.5}
           dot={false}
+          activeDot={{ r: 3, fill: 'hsl(var(--chart-2))', strokeWidth: 0 }}
         />
       </LineChart>
     </ResponsiveContainer>

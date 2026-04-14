@@ -41,3 +41,4 @@ prisma/*.db-journal
 
 # Uploads
 uploads/
+test_data.csv

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Portfolio {
   id: string;
@@ -89,12 +89,12 @@ export default function BacktestsPage() {
     setFormSuccess('');
 
     if (!selectedPortfolioId) {
-      setFormError('Please select a portfolio');
+      setFormError('Select a portfolio');
       return;
     }
 
     if (!startDate || !endDate) {
-      setFormError('Please select start and end dates');
+      setFormError('Select start and end dates');
       return;
     }
 
@@ -105,7 +105,7 @@ export default function BacktestsPage() {
 
     const capital = parseFloat(initialCapital);
     if (isNaN(capital) || capital <= 0) {
-      setFormError('Initial capital must be a positive number');
+      setFormError('Initial capital must be positive');
       return;
     }
 
@@ -130,11 +130,11 @@ export default function BacktestsPage() {
       }
 
       const { backtest } = await response.json();
-      setFormSuccess('Backtest completed successfully!');
+      setFormSuccess('Backtest complete');
       fetchBacktests();
       setTimeout(() => {
         router.push(`/backtests/${backtest.id}`);
-      }, 1500);
+      }, 1000);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Failed to run backtest');
     } finally {
@@ -152,176 +152,187 @@ export default function BacktestsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div>
+      <div className="page-header mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Backtests</h1>
-          <p className="text-muted-foreground">
-            Run portfolio backtests to analyze historical performance
+          <h1 className="page-title">Backtests</h1>
+          <p className="page-description">
+            Run historical simulations to evaluate portfolio performance.
           </p>
         </div>
         {!showForm && (
-          <Button onClick={() => setShowForm(true)}>Run Backtest</Button>
+          <Button onClick={() => setShowForm(true)}>
+            Run Backtest
+          </Button>
         )}
       </div>
 
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Configure Backtest</CardTitle>
-            <CardDescription>
-              Select a portfolio and configure the backtest parameters
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="portfolio">Portfolio</Label>
-                <select
-                  id="portfolio"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={selectedPortfolioId}
-                  onChange={(e) => setSelectedPortfolioId(e.target.value)}
-                >
-                  <option value="">Select a portfolio</option>
-                  {portfolios.map((portfolio) => (
-                    <option key={portfolio.id} value={portfolio.id}>
-                      {portfolio.name} ({portfolio.holdings.length} holdings)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    required
-                  />
+      <div className="space-y-6">
+        {showForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Configure</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="portfolio">Portfolio</Label>
+                  <select
+                    id="portfolio"
+                    className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20"
+                    value={selectedPortfolioId}
+                    onChange={(e) => setSelectedPortfolioId(e.target.value)}
+                  >
+                    <option value="">Select a portfolio</option>
+                    {portfolios.map((portfolio) => (
+                      <option key={portfolio.id} value={portfolio.id}>
+                        {portfolio.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    required
-                  />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="startDate">Start Date</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="endDate">End Date</Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="rebalance">Rebalance Frequency</Label>
-                <select
-                  id="rebalance"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={rebalanceFrequency}
-                  onChange={(e) => setRebalanceFrequency(e.target.value)}
-                >
-                  <option value="none">None</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
-                </select>
-              </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="rebalance">Rebalance</Label>
+                    <select
+                      id="rebalance"
+                      className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20"
+                      value={rebalanceFrequency}
+                      onChange={(e) => setRebalanceFrequency(e.target.value)}
+                    >
+                      <option value="none">None</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                    </select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="capital">Initial Capital ($)</Label>
-                  <Input
-                    id="capital"
-                    type="number"
-                    min="1"
-                    step="100"
-                    value={initialCapital}
-                    onChange={(e) => setInitialCapital(e.target.value)}
-                    required
-                  />
+                  <div className="space-y-1.5">
+                    <Label htmlFor="capital">Initial Capital ($)</Label>
+                    <Input
+                      id="capital"
+                      type="number"
+                      min="1"
+                      step="100"
+                      value={initialCapital}
+                      onChange={(e) => setInitialCapital(e.target.value)}
+                      required
+                      className="font-mono tabular-nums"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {formError && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  {formError}
+                {formError && (
+                  <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
+                    {formError}
+                  </div>
+                )}
+
+                {formSuccess && (
+                  <div className="rounded-md bg-positive/5 border border-positive/15 px-3 py-2.5 text-[13px] text-positive">
+                    {formSuccess}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <Button type="submit" disabled={isRunning}>
+                    {isRunning ? 'Running...' : 'Run Backtest'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={resetForm}>
+                    Cancel
+                  </Button>
                 </div>
-              )}
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
-              {formSuccess && (
-                <div className="rounded-md bg-green-600/10 p-3 text-sm text-green-600">
-                  {formSuccess}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button type="submit" disabled={isRunning}>
-                  {isRunning ? 'Running...' : 'Run Backtest'}
-                </Button>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Backtest History</CardTitle>
-          <CardDescription>Previously run backtests</CardDescription>
-        </CardHeader>
-        <CardContent>
+        <div>
+          <h2 className="section-title mb-3">History</h2>
           {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <div className="space-y-2">
+              {[1, 2].map(i => (
+                <div key={i} className="h-16 rounded-lg border border-border animate-pulse-subtle bg-muted/30" />
+              ))}
+            </div>
           ) : backtests.length === 0 && !showForm ? (
-            <p className="text-muted-foreground">
-              No backtests yet. Run your first backtest above.
-            </p>
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
+              <p className="text-[13px] text-muted-foreground">No backtests yet. Run your first backtest above.</p>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {backtests.map((backtest) => {
                 const metrics = formatMetrics(backtest.summaryMetrics);
                 return (
                   <div
                     key={backtest.id}
-                    className="flex items-center justify-between rounded-lg border p-4"
+                    className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30 cursor-pointer"
+                    onClick={() => router.push(`/backtests/${backtest.id}`)}
                   >
-                    <div className="space-y-1">
-                      <h4 className="font-medium">{backtest.portfolio.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(backtest.startDate).toLocaleDateString()} - {new Date(backtest.endDate).toLocaleDateString()}
-                        {' • '}
-                        {backtest.rebalanceFrequency === 'none' ? 'No rebalancing' : `${backtest.rebalanceFrequency} rebalancing`}
-                        {' • '}
-                        ${backtest.initialCapital.toLocaleString()} initial
-                      </p>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-[13px] font-medium">{backtest.portfolio.name}</h3>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                        <span className="font-mono tabular-nums">
+                          {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
+                        </span>
+                        <span className="text-border/60">&middot;</span>
+                        <span>{backtest.rebalanceFrequency === 'none' ? 'No rebalance' : backtest.rebalanceFrequency}</span>
+                        <span className="text-border/60">&middot;</span>
+                        <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()}</span>
+                      </div>
                       {metrics && (
-                        <div className="flex gap-4 pt-1 text-xs text-muted-foreground">
-                          <span>Return: {(metrics.totalReturn * 100).toFixed(2)}%</span>
-                          <span>Sharpe: {metrics.sharpeRatio.toFixed(2)}</span>
-                          <span>Max DD: {(metrics.maxDrawdown * 100).toFixed(2)}%</span>
+                        <div className="flex items-center gap-3 mt-2 text-[11px] font-mono tabular-nums">
+                          <span className={metrics.totalReturn >= 0 ? 'text-positive' : 'text-negative'}>
+                            {(metrics.totalReturn * 100).toFixed(2)}%
+                          </span>
+                          <span className="text-muted-foreground">
+                            Sharpe {metrics.sharpeRatio.toFixed(2)}
+                          </span>
+                          <span className="text-negative">
+                            DD {(metrics.maxDrawdown * 100).toFixed(2)}%
+                          </span>
                         </div>
                       )}
                     </div>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => router.push(`/backtests/${backtest.id}`)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => { e.stopPropagation(); router.push(`/backtests/${backtest.id}`); }}
                     >
-                      View Results
+                      View
                     </Button>
                   </div>
                 );
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

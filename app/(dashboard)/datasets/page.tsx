@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { parseCSV, type PriceRow } from '@/lib/csv/parser';
 
 interface Dataset {
@@ -25,7 +24,6 @@ interface Dataset {
 }
 
 export default function DatasetsPage() {
-  const router = useRouter();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -56,9 +54,9 @@ export default function DatasetsPage() {
     }
   }, []);
 
-  useState(() => {
+  useEffect(() => {
     fetchDatasets();
-  });
+  }, [fetchDatasets]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,7 +76,7 @@ export default function DatasetsPage() {
 
   const handleUpload = async () => {
     if (!datasetName || !csvContent || !parseResult) {
-      setImportError('Please enter a dataset name and select a valid CSV file');
+      setImportError('Enter a dataset name and select a valid CSV file');
       return;
     }
 
@@ -118,7 +116,7 @@ export default function DatasetsPage() {
 
       const importResult = await importResponse.json();
       setImportSuccess(
-        `Successfully imported ${importResult.importResult.symbolsImported} symbols with ${importResult.importResult.priceRecordsCreated} price records`
+        `${importResult.importResult.symbolsImported} symbols, ${importResult.importResult.priceRecordsCreated} records imported`
       );
       setDatasetName('');
       setFileName('');
@@ -136,7 +134,7 @@ export default function DatasetsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this dataset?')) return;
+    if (!confirm('Delete this dataset and all its data?')) return;
 
     try {
       const response = await fetch(`/api/datasets/${id}`, { method: 'DELETE' });
@@ -149,175 +147,187 @@ export default function DatasetsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Datasets</h1>
-        <p className="text-muted-foreground">
-          Upload and manage your historical price data
-        </p>
+    <div>
+      <div className="page-header mb-8">
+        <div>
+          <h1 className="page-title">Datasets</h1>
+          <p className="page-description">
+            Upload historical price data to use for portfolio construction and backtesting.
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload Dataset</CardTitle>
-          <CardDescription>
-            Upload a CSV file with historical price data. Required columns: date, symbol, close.
-            Optional columns: open, high, low, volume.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="datasetName">Dataset Name</Label>
-            <Input
-              id="datasetName"
-              placeholder="e.g., US Stocks 2018-2024"
-              value={datasetName}
-              onChange={(e) => setDatasetName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="csvFile">CSV File</Label>
-            <Input
-              id="csvFile"
-              type="file"
-              accept=".csv"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-            />
-          </div>
-
-          {parseResult && (
-            <div className="rounded-md border p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Preview</h4>
-                <span className={`text-sm ${parseResult.success ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {parseResult.stats.validRows} valid / {parseResult.stats.totalRows} total rows
-                </span>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload Dataset</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="datasetName">Name</Label>
+                <Input
+                  id="datasetName"
+                  placeholder="e.g. US Equities 2018-2024"
+                  value={datasetName}
+                  onChange={(e) => setDatasetName(e.target.value)}
+                />
               </div>
 
-              {parseResult.errors.length > 0 && (
-                <div className="mb-3 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  <p className="font-medium mb-1">Errors found:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {parseResult.errors.slice(0, 5).map((error, i) => (
-                      <li key={i}>
-                        Row {error.row}
-                        {error.column && ` (${error.column})`}: {error.message}
-                      </li>
-                    ))}
-                    {parseResult.errors.length > 5 && (
-                      <li>...and {parseResult.errors.length - 5} more errors</li>
-                    )}
-                  </ul>
-                </div>
-              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="csvFile">CSV File</Label>
+                <Input
+                  id="csvFile"
+                  type="file"
+                  accept=".csv"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+              </div>
+            </div>
 
-              {parseResult.rows.length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2 px-1">Date</th>
-                        <th className="text-left py-2 px-1">Symbol</th>
-                        <th className="text-right py-2 px-1">Close</th>
-                        {parseResult.rows[0].open !== undefined && (
-                          <th className="text-right py-2 px-1">Open</th>
-                        )}
-                        {parseResult.rows[0].high !== undefined && (
-                          <th className="text-right py-2 px-1">High</th>
-                        )}
-                        {parseResult.rows[0].low !== undefined && (
-                          <th className="text-right py-2 px-1">Low</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {parseResult.rows.slice(0, 5).map((row, i) => (
-                        <tr key={i} className="border-b last:border-0">
-                          <td className="py-2 px-1">{row.date}</td>
-                          <td className="py-2 px-1 font-medium">{row.symbol}</td>
-                          <td className="py-2 px-1 text-right">${row.close.toFixed(2)}</td>
-                          {row.open !== undefined && (
-                            <td className="py-2 px-1 text-right">${row.open.toFixed(2)}</td>
+            {parseResult && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-foreground">File Preview</span>
+                  <span className={`text-xs font-mono tabular-nums ${parseResult.success ? 'text-positive' : 'text-negative'}`}>
+                    {parseResult.stats.validRows} of {parseResult.stats.totalRows} rows valid
+                  </span>
+                </div>
+
+                {parseResult.errors.length > 0 && (
+                  <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5">
+                    <p className="text-[11px] font-medium text-negative mb-1 uppercase tracking-wider">Errors</p>
+                    <ul className="text-xs text-negative/80 space-y-0.5">
+                      {parseResult.errors.slice(0, 5).map((error, i) => (
+                        <li key={i} className="font-mono">
+                          Row {error.row}{error.column && ` (${error.column})`}: {error.message}
+                        </li>
+                      ))}
+                      {parseResult.errors.length > 5 && (
+                        <li className="text-negative/60">+ {parseResult.errors.length - 5} more</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {parseResult.rows.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="table-header text-left py-2 pr-4">Date</th>
+                          <th className="table-header text-left py-2 pr-4">Symbol</th>
+                          <th className="table-header text-right py-2 pl-4">Close</th>
+                          {parseResult.rows[0].open !== undefined && (
+                            <th className="table-header text-right py-2 pl-4">Open</th>
                           )}
-                          {row.high !== undefined && (
-                            <td className="py-2 px-1 text-right">${row.high.toFixed(2)}</td>
+                          {parseResult.rows[0].high !== undefined && (
+                            <th className="table-header text-right py-2 pl-4">High</th>
                           )}
-                          {row.low !== undefined && (
-                            <td className="py-2 px-1 text-right">${row.low.toFixed(2)}</td>
+                          {parseResult.rows[0].low !== undefined && (
+                            <th className="table-header text-right py-2 pl-4">Low</th>
                           )}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {parseResult.rows.length > 5 && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Showing first 5 of {parseResult.rows.length} rows...
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {importError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {importError}
-            </div>
-          )}
-
-          {importSuccess && (
-            <div className="rounded-md bg-green-600/10 p-3 text-sm text-green-600">
-              {importSuccess}
-            </div>
-          )}
-
-          <Button
-            onClick={handleUpload}
-            disabled={!datasetName || !parseResult || parseResult.rows.length === 0 || isUploading}
-          >
-            {isUploading ? 'Importing...' : 'Import Dataset'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Datasets</CardTitle>
-          <CardDescription>
-            Previously uploaded datasets
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : datasets.length === 0 ? (
-            <p className="text-muted-foreground">No datasets yet. Upload your first CSV file above.</p>
-          ) : (
-            <div className="space-y-4">
-              {datasets.map((dataset) => (
-                <div
-                  key={dataset.id}
-                  className="flex items-center justify-between rounded-lg border p-4"
-                >
-                  <div>
-                    <h4 className="font-medium">{dataset.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {dataset.fileName} • {dataset.assets.length} symbols
-                      {dataset.status === 'completed' && ' • Completed'}
-                      {dataset.status === 'partial' && ' • Partial (some errors)'}
-                      {dataset.status === 'pending' && ' • Pending'}
-                    </p>
-                    {dataset.assets.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {dataset.assets.map(a => a.symbol).join(', ')}
+                      </thead>
+                      <tbody>
+                        {parseResult.rows.slice(0, 5).map((row, i) => (
+                          <tr key={i} className="border-b border-border/40 last:border-0">
+                            <td className="py-1.5 pr-4 font-mono text-xs tabular-nums">{row.date}</td>
+                            <td className="py-1.5 pr-4 text-[13px] font-medium">{row.symbol}</td>
+                            <td className="py-1.5 pl-4 text-right font-mono text-xs tabular-nums">${row.close.toFixed(2)}</td>
+                            {row.open !== undefined && (
+                              <td className="py-1.5 pl-4 text-right font-mono text-xs tabular-nums">${row.open.toFixed(2)}</td>
+                            )}
+                            {row.high !== undefined && (
+                              <td className="py-1.5 pl-4 text-right font-mono text-xs tabular-nums">${row.high.toFixed(2)}</td>
+                            )}
+                            {row.low !== undefined && (
+                              <td className="py-1.5 pl-4 text-right font-mono text-xs tabular-nums">${row.low.toFixed(2)}</td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {parseResult.rows.length > 5 && (
+                      <p className="text-[11px] text-muted-foreground mt-2 tabular-nums">
+                        Showing 5 of {parseResult.rows.length} rows
                       </p>
                     )}
                   </div>
+                )}
+              </div>
+            )}
+
+            {importError && (
+              <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
+                {importError}
+              </div>
+            )}
+
+            {importSuccess && (
+              <div className="rounded-md bg-positive/5 border border-positive/15 px-3 py-2.5 text-[13px] text-positive">
+                {importSuccess}
+              </div>
+            )}
+
+            <div className="flex pt-1">
+              <Button
+                onClick={handleUpload}
+                disabled={!datasetName || !parseResult || parseResult.rows.length === 0 || isUploading}
+              >
+                {isUploading ? 'Importing...' : 'Import Dataset'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div>
+          <h2 className="section-title mb-3">Your Datasets</h2>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map(i => (
+                <div key={i} className="h-16 rounded-lg border border-border animate-pulse-subtle bg-muted/30" />
+              ))}
+            </div>
+          ) : datasets.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
+              <p className="text-[13px] text-muted-foreground">No datasets yet. Upload a CSV file to get started.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {datasets.map((dataset) => (
+                <div
+                  key={dataset.id}
+                  className="group flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[13px] font-medium text-foreground">{dataset.name}</h3>
+                      <span className={`status-dot ${dataset.status === 'completed' ? 'status-dot-completed' : dataset.status === 'partial' ? 'status-dot-partial' : 'status-dot-pending'}`} />
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                      <span className="font-mono">{dataset.fileName}</span>
+                      <span className="text-border/60">&middot;</span>
+                      <span>{dataset.assets.length} symbols</span>
+                    </div>
+                    {dataset.assets.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {dataset.assets.slice(0, 6).map(a => (
+                          <span key={a.id} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono font-medium text-foreground/80">
+                            {a.symbol}
+                          </span>
+                        ))}
+                        {dataset.assets.length > 6 && (
+                          <span className="text-[10px] text-muted-foreground self-center">+{dataset.assets.length - 6}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
+                    className="text-muted-foreground hover:text-negative"
                     onClick={() => handleDelete(dataset.id)}
                   >
                     Delete
@@ -326,8 +336,8 @@ export default function DatasetsPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

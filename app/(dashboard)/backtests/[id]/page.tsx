@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PortfolioValueChart } from '@/components/charts/portfolio-value-chart';
 import { CumulativeReturnChart } from '@/components/charts/cumulative-return-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
@@ -53,6 +53,17 @@ interface SummaryMetrics {
   numberOfObservations: number;
 }
 
+function MetricTile({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-3">
+      <p className="metric-label mb-1.5">{label}</p>
+      <p className={`metric-value ${positive !== undefined ? (positive ? 'text-positive' : 'text-negative') : ''}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
 export default function BacktestDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -92,7 +103,10 @@ export default function BacktestDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="space-y-3">
+          <div className="h-6 w-48 rounded bg-muted/60 animate-pulse-subtle" />
+          <div className="h-4 w-32 rounded bg-muted/40 animate-pulse-subtle" />
+        </div>
       </div>
     );
   }
@@ -100,14 +114,12 @@ export default function BacktestDetailPage() {
   if (error || !backtest) {
     return (
       <div className="space-y-4">
-        <Button variant="outline" onClick={() => router.push('/backtests')}>
-          ← Back to Backtests
+        <Button variant="ghost" size="sm" onClick={() => router.push('/backtests')}>
+          &larr; Back
         </Button>
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">{error || 'Backtest not found'}</p>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-dashed border-border py-16 text-center">
+          <p className="text-[13px] text-muted-foreground">{error || 'Backtest not found'}</p>
+        </div>
       </div>
     );
   }
@@ -121,124 +133,70 @@ export default function BacktestDetailPage() {
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Button variant="outline" size="sm" onClick={() => router.push('/backtests')}>
-            ← Back
-          </Button>
+    <div className="space-y-8">
+      <div>
+        <Button variant="ghost" size="sm" className="-ml-2 mb-3" onClick={() => router.push('/backtests')}>
+          &larr; Back
+        </Button>
+        <h1 className="page-title">{backtest.portfolio.name}</h1>
+        <div className="flex items-center gap-2 mt-1.5 text-[12px] text-muted-foreground">
+          <span className="font-mono tabular-nums">
+            {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
+          </span>
+          <span className="text-border/60">&middot;</span>
+          <span>{backtest.rebalanceFrequency === 'none' ? 'No rebalancing' : `${backtest.rebalanceFrequency} rebalancing`}</span>
+          <span className="text-border/60">&middot;</span>
+          <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()} initial</span>
         </div>
       </div>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{backtest.portfolio.name}</h1>
-        <p className="text-muted-foreground">
-          {new Date(backtest.startDate).toLocaleDateString()} - {new Date(backtest.endDate).toLocaleDateString()}
-          {' • '}
-          {backtest.rebalanceFrequency === 'none' ? 'No rebalancing' : `${backtest.rebalanceFrequency} rebalancing`}
-          {' • '}
-          ${backtest.initialCapital.toLocaleString()} initial
-        </p>
-      </div>
-
       {metrics && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Return</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${metrics.totalReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {(metrics.totalReturn * 100).toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Annualized Return</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${metrics.annualizedReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {(metrics.annualizedReturn * 100).toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Volatility (Ann.)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {(metrics.annualizedVolatility * 100).toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Sharpe Ratio</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {metrics.sharpeRatio.toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Max Drawdown</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {(metrics.maxDrawdown * 100).toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Best Day</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {(metrics.bestDay * 100).toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Worst Day</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {(metrics.worstDay * 100).toFixed(2)}%
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Observations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {metrics.numberOfObservations.toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <MetricTile
+            label="Total Return"
+            value={`${(metrics.totalReturn * 100).toFixed(2)}%`}
+            positive={metrics.totalReturn >= 0}
+          />
+          <MetricTile
+            label="Annualized Return"
+            value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
+            positive={metrics.annualizedReturn >= 0}
+          />
+          <MetricTile
+            label="Annualized Vol"
+            value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
+          />
+          <MetricTile
+            label="Sharpe Ratio"
+            value={metrics.sharpeRatio.toFixed(2)}
+          />
+          <MetricTile
+            label="Max Drawdown"
+            value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
+            positive={false}
+          />
+          <MetricTile
+            label="Best Day"
+            value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
+            positive={true}
+          />
+          <MetricTile
+            label="Worst Day"
+            value={`${(metrics.worstDay * 100).toFixed(2)}%`}
+            positive={false}
+          />
+          <MetricTile
+            label="Observations"
+            value={metrics.numberOfObservations.toLocaleString()}
+          />
         </div>
       )}
 
       <Card>
         <CardHeader>
           <CardTitle>Portfolio Value</CardTitle>
-          <CardDescription>Portfolio value over time</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <PortfolioValueChart data={chartData} />
         </CardContent>
       </Card>
@@ -246,9 +204,8 @@ export default function BacktestDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Cumulative Return</CardTitle>
-          <CardDescription>Total return since start of backtest</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <CumulativeReturnChart data={chartData} />
         </CardContent>
       </Card>
@@ -256,9 +213,8 @@ export default function BacktestDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Drawdown</CardTitle>
-          <CardDescription>Portfolio drawdown from peak</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <DrawdownChart data={chartData} />
         </CardContent>
       </Card>
@@ -266,28 +222,27 @@ export default function BacktestDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Asset Allocation</CardTitle>
-          <CardDescription>Target portfolio weights</CardDescription>
         </CardHeader>
         <CardContent>
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr className="border-b">
-                <th className="text-left py-2">Symbol</th>
-                <th className="text-right py-2">Weight</th>
+              <tr className="border-b border-border">
+                <th className="table-header text-left py-2">Symbol</th>
+                <th className="table-header text-right py-2">Weight</th>
               </tr>
             </thead>
             <tbody>
               {backtest.portfolio.holdings.map((holding) => (
-                <tr key={holding.assetId} className="border-b last:border-0">
-                  <td className="py-2">
-                    <span className="font-medium">{holding.asset.symbol}</span>
+                <tr key={holding.assetId} className="border-b border-border/40 last:border-0">
+                  <td className="py-2.5">
+                    <span className="font-mono font-medium text-[13px]">{holding.asset.symbol}</span>
                     {holding.asset.displayName && (
-                      <span className="text-muted-foreground ml-2">
+                      <span className="text-muted-foreground ml-1.5 text-[11px]">
                         {holding.asset.displayName}
                       </span>
                     )}
                   </td>
-                  <td className="py-2 text-right">{holding.weight.toFixed(2)}%</td>
+                  <td className="py-2.5 text-right font-mono text-[13px] tabular-nums">{holding.weight.toFixed(2)}%</td>
                 </tr>
               ))}
             </tbody>
@@ -298,35 +253,36 @@ export default function BacktestDetailPage() {
       <Card>
         <CardHeader>
           <CardTitle>Daily Returns</CardTitle>
-          <CardDescription>Last 30 days of returns</CardDescription>
         </CardHeader>
         <CardContent>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2">Date</th>
-                <th className="text-right py-2">Value</th>
-                <th className="text-right py-2">Daily Return</th>
-                <th className="text-right py-2">Cumulative Return</th>
-              </tr>
-            </thead>
-            <tbody>
-              {backtest.dataPoints.slice(-30).map((dp) => (
-                <tr key={dp.id} className="border-b last:border-0">
-                  <td className="py-2">{new Date(dp.date).toLocaleDateString()}</td>
-                  <td className="py-2 text-right">
-                    ${dp.portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </td>
-                  <td className={`py-2 text-right ${dp.portfolioReturn >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {(dp.portfolioReturn * 100).toFixed(2)}%
-                  </td>
-                  <td className={`py-2 text-right ${(dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {(((dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital) * 100).toFixed(2)}%
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="table-header text-left py-2">Date</th>
+                  <th className="table-header text-right py-2">Value</th>
+                  <th className="table-header text-right py-2">Return</th>
+                  <th className="table-header text-right py-2">Cumulative</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {backtest.dataPoints.slice(-30).map((dp) => (
+                  <tr key={dp.id} className="border-b border-border/40 last:border-0">
+                    <td className="py-2 font-mono text-xs tabular-nums">{new Date(dp.date).toLocaleDateString()}</td>
+                    <td className="py-2 text-right font-mono text-xs tabular-nums">
+                      ${dp.portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className={`py-2 text-right font-mono text-xs tabular-nums ${dp.portfolioReturn >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {(dp.portfolioReturn * 100).toFixed(2)}%
+                    </td>
+                    <td className={`py-2 text-right font-mono text-xs tabular-nums ${(dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital >= 0 ? 'text-positive' : 'text-negative'}`}>
+                      {(((dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital) * 100).toFixed(2)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
     </div>
