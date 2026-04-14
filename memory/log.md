@@ -22,8 +22,7 @@
 - Node.js 18.16.0 is the environment version
 
 ## Next Steps
-- Phase 3: Portfolio builder (create/edit/delete portfolios, weight assignment) - IN PROGRESS
-- Phase 4: Backtest engine (core analytics logic, computation path)
+- Phase 4: Backtest engine - COMPLETE ✅
 - Phase 5: Results dashboard (charts, metrics)
 - Phase 6: Comparison and polish
 
@@ -33,6 +32,19 @@
 - [x] Dataset API routes (GET, POST, DELETE)
 - [x] Dataset import API route (`/api/datasets/import`)
 - [x] Datasets page UI with upload, preview, and validation
+
+## Phase 3 Progress
+- [x] Portfolio validation utility
+- [x] Unit tests for portfolio validators (14 tests passing)
+- [x] Portfolio API routes (CRUD)
+- [x] Assets API route
+- [x] Portfolios page UI
+
+## Phase 4 Progress
+- [x] Analytics engine (`lib/analytics/engine.ts`)
+- [x] Unit tests for analytics engine (9 tests passing)
+- [x] Backtest API routes
+- [x] Backtests page UI
 
 ## Key Files
 - `prisma/schema.prisma` - Database schema
