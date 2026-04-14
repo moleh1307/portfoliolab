@@ -1,19 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 import { CreatePortfolioSchema, validateWeights } from '@/lib/validators/portfolio';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const portfolios = await prisma.portfolio.findMany({
-      where: { userId: session.user.id },
+      where: { userId: DEFAULT_USER_ID },
       include: {
         holdings: {
           include: {
@@ -43,12 +36,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const validation = CreatePortfolioSchema.safeParse(body);
 
@@ -73,7 +60,7 @@ export async function POST(request: Request) {
     const userAssets = await prisma.asset.findMany({
       where: {
         id: { in: userAssetIds },
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
       },
       select: { id: true },
     });
@@ -90,7 +77,7 @@ export async function POST(request: Request) {
 
     const portfolio = await prisma.portfolio.create({
       data: {
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
         name,
         description,
         holdings: {

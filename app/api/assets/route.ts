@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const assets = await prisma.asset.findMany({
-      where: { userId: session.user.id },
+      where: { userId: DEFAULT_USER_ID },
       select: {
         id: true,
         symbol: true,

@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 
 const createDatasetSchema = z.object({
   name: z.string().min(1, 'Dataset name is required'),
@@ -11,14 +10,8 @@ const createDatasetSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const datasets = await prisma.dataset.findMany({
-      where: { userId: session.user.id },
+      where: { userId: DEFAULT_USER_ID },
       include: {
         assets: {
           select: {
@@ -45,12 +38,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const validation = createDatasetSchema.safeParse(body);
 
@@ -65,7 +52,7 @@ export async function POST(request: Request) {
 
     const dataset = await prisma.dataset.create({
       data: {
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
         name,
         fileName,
         status: 'pending',

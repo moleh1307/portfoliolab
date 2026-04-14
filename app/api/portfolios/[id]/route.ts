@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 import { CreatePortfolioSchema, validateWeights } from '@/lib/validators/portfolio';
 
 export async function GET(
@@ -9,17 +8,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
     const { id } = await params;
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const portfolio = await prisma.portfolio.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
       },
       include: {
         holdings: {
@@ -58,15 +52,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
     const { id } = await params;
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const existing = await prisma.portfolio.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, userId: DEFAULT_USER_ID },
     });
 
     if (!existing) {
@@ -97,7 +86,7 @@ export async function PUT(
     const userAssets = await prisma.asset.findMany({
       where: {
         id: { in: userAssetIds },
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
       },
       select: { id: true },
     });
@@ -158,15 +147,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
     const { id } = await params;
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const portfolio = await prisma.portfolio.findFirst({
-      where: { id, userId: session.user.id },
+      where: { id, userId: DEFAULT_USER_ID },
     });
 
     if (!portfolio) {

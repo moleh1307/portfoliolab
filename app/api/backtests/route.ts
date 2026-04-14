@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 import { runBacktest, type PriceData } from '@/lib/analytics/engine';
 
 const CreateBacktestSchema = z.object({
@@ -16,14 +15,8 @@ const CreateBacktestSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const backtests = await prisma.backtestRun.findMany({
-      where: { userId: session.user.id },
+      where: { userId: DEFAULT_USER_ID },
       include: {
         portfolio: {
           select: {
@@ -47,12 +40,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const validation = CreateBacktestSchema.safeParse(body);
 
@@ -75,7 +62,7 @@ export async function POST(request: Request) {
     const portfolio = await prisma.portfolio.findFirst({
       where: {
         id: portfolioId,
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
       },
       include: {
         holdings: {
@@ -143,7 +130,7 @@ export async function POST(request: Request) {
 
     const backtestRun = await prisma.backtestRun.create({
       data: {
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
         portfolioId,
         benchmarkAssetId: benchmarkAssetId || null,
         startDate: new Date(startDate),

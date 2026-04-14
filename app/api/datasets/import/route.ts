@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 import { parseCSV, groupRowsBySymbol, getDateRange } from '@/lib/csv/parser';
 
 const importDatasetSchema = z.object({
@@ -12,12 +11,6 @@ const importDatasetSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const body = await request.json();
     const validation = importDatasetSchema.safeParse(body);
 
@@ -33,7 +26,7 @@ export async function POST(request: Request) {
     const dataset = await prisma.dataset.findFirst({
       where: {
         id: datasetId,
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
       },
     });
 
@@ -61,7 +54,7 @@ export async function POST(request: Request) {
     
     const existingAssets = await prisma.asset.findMany({
       where: {
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
         symbol: { in: symbols },
       },
     });
@@ -74,7 +67,7 @@ export async function POST(request: Request) {
         const rows = groupedRows.get(symbol)!;
         const dateRange = getDateRange(rows);
         return {
-          userId: session.user.id,
+          userId: DEFAULT_USER_ID,
           datasetId,
           symbol,
           displayName: symbol,
@@ -89,7 +82,7 @@ export async function POST(request: Request) {
 
     const allAssets = await prisma.asset.findMany({
       where: {
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
         symbol: { in: symbols },
       },
     });

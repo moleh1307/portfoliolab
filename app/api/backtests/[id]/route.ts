@@ -1,24 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
-import { authOptions } from '@/lib/auth';
+import { DEFAULT_USER_ID } from '@/lib/constants';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
     const { id } = await params;
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const backtest = await prisma.backtestRun.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: DEFAULT_USER_ID,
       },
       include: {
         portfolio: {
