@@ -22,8 +22,7 @@
 - Node.js 18.16.0 is the environment version
 
 ## Next Steps
-- Phase 2: Dataset import (CSV upload flow, validation, preview) - IN PROGRESS
-- Phase 3: Portfolio builder (create/edit/delete portfolios, weight assignment)
+- Phase 3: Portfolio builder (create/edit/delete portfolios, weight assignment) - IN PROGRESS
 - Phase 4: Backtest engine (core analytics logic, computation path)
 - Phase 5: Results dashboard (charts, metrics)
 - Phase 6: Comparison and polish
