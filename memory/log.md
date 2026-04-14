@@ -22,8 +22,7 @@
 - Node.js 18.16.0 is the environment version
 
 ## Next Steps
-- Phase 4: Backtest engine - COMPLETE ✅
-- Phase 5: Results dashboard (charts, metrics)
+- Phase 5: Results dashboard - COMPLETE ✅
 - Phase 6: Comparison and polish
 
 ## Phase 2 Progress
@@ -45,6 +44,11 @@
 - [x] Unit tests for analytics engine (9 tests passing)
 - [x] Backtest API routes
 - [x] Backtests page UI
+
+## Phase 5 Progress
+- [x] Chart components (PortfolioValueChart, CumulativeReturnChart, DrawdownChart)
+- [x] Backtest detail API route (`/api/backtests/[id]`)
+- [x] Backtest detail page with full results dashboard
 
 ## Key Files
 - `prisma/schema.prisma` - Database schema
