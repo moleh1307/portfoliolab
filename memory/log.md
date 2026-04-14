@@ -22,8 +22,7 @@
 - Node.js 18.16.0 is the environment version
 
 ## Next Steps
-- Phase 5: Results dashboard - COMPLETE ✅
-- Phase 6: Comparison and polish
+- Phase 6: Comparison and polish - COMPLETE ✅
 
 ## Phase 2 Progress
 - [x] CSV parser utility (`lib/csv/parser.ts`)
@@ -49,6 +48,23 @@
 - [x] Chart components (PortfolioValueChart, CumulativeReturnChart, DrawdownChart)
 - [x] Backtest detail API route (`/api/backtests/[id]`)
 - [x] Backtest detail page with full results dashboard
+
+## Phase 6 Progress
+- [x] Comparison chart component
+- [x] Comparison page UI with multi-backtest selection
+- [x] Overlaid performance chart
+- [x] Summary metrics comparison table
+- [x] Build passes
+- [x] All 35 tests pass
+
+## MVP COMPLETE
+All 6 phases of PortfolioLab MVP are complete:
+- [x] Phase 1: Repository foundation
+- [x] Phase 2: Dataset import
+- [x] Phase 3: Portfolio builder
+- [x] Phase 4: Backtest engine
+- [x] Phase 5: Results dashboard
+- [x] Phase 6: Comparison and polish
 
 ## Key Files
 - `prisma/schema.prisma` - Database schema
