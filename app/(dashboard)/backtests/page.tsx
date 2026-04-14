@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 
 interface Portfolio {
   id: string;
@@ -28,12 +30,12 @@ interface Backtest {
 
 export default function BacktestsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [backtests, setBacktests] = useState<Backtest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
   const [isRunning, setIsRunning] = useState(false);
 
   const [selectedPortfolioId, setSelectedPortfolioId] = useState('');
@@ -49,10 +51,10 @@ export default function BacktestsPage() {
         const data = await response.json();
         setPortfolios(data.portfolios);
       }
-    } catch (error) {
-      console.error('Failed to fetch portfolios:', error);
+    } catch {
+      toast('Failed to load portfolios', 'error');
     }
-  }, []);
+  }, [toast]);
 
   const fetchBacktests = useCallback(async () => {
     try {
@@ -61,10 +63,10 @@ export default function BacktestsPage() {
         const data = await response.json();
         setBacktests(data.backtests);
       }
-    } catch (error) {
-      console.error('Failed to fetch backtests:', error);
+    } catch {
+      toast('Failed to load backtests', 'error');
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     Promise.all([fetchPortfolios(), fetchBacktests()]).finally(() => {
@@ -79,14 +81,12 @@ export default function BacktestsPage() {
     setRebalanceFrequency('monthly');
     setInitialCapital('10000');
     setFormError('');
-    setFormSuccess('');
     setShowForm(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    setFormSuccess('');
 
     if (!selectedPortfolioId) {
       setFormError('Select a portfolio');
@@ -130,11 +130,9 @@ export default function BacktestsPage() {
       }
 
       const { backtest } = await response.json();
-      setFormSuccess('Backtest complete');
+      toast('Backtest complete', 'success');
       fetchBacktests();
-      setTimeout(() => {
-        router.push(`/backtests/${backtest.id}`);
-      }, 1000);
+      router.push(`/backtests/${backtest.id}`);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Failed to run backtest');
     } finally {
@@ -161,9 +159,7 @@ export default function BacktestsPage() {
           </p>
         </div>
         {!showForm && (
-          <Button onClick={() => setShowForm(true)}>
-            Run Backtest
-          </Button>
+          <Button onClick={() => setShowForm(true)}>Run Backtest</Button>
         )}
       </div>
 
@@ -179,9 +175,10 @@ export default function BacktestsPage() {
                   <Label htmlFor="portfolio">Portfolio</Label>
                   <select
                     id="portfolio"
-                    className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20"
+                    className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20 disabled:opacity-50"
                     value={selectedPortfolioId}
                     onChange={(e) => setSelectedPortfolioId(e.target.value)}
+                    disabled={isRunning}
                   >
                     <option value="">Select a portfolio</option>
                     {portfolios.map((portfolio) => (
@@ -201,6 +198,7 @@ export default function BacktestsPage() {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       required
+                      disabled={isRunning}
                     />
                   </div>
 
@@ -212,6 +210,7 @@ export default function BacktestsPage() {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       required
+                      disabled={isRunning}
                     />
                   </div>
                 </div>
@@ -221,9 +220,10 @@ export default function BacktestsPage() {
                     <Label htmlFor="rebalance">Rebalance</Label>
                     <select
                       id="rebalance"
-                      className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20"
+                      className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20 disabled:opacity-50"
                       value={rebalanceFrequency}
                       onChange={(e) => setRebalanceFrequency(e.target.value)}
+                      disabled={isRunning}
                     >
                       <option value="none">None</option>
                       <option value="monthly">Monthly</option>
@@ -241,6 +241,7 @@ export default function BacktestsPage() {
                       value={initialCapital}
                       onChange={(e) => setInitialCapital(e.target.value)}
                       required
+                      disabled={isRunning}
                       className="font-mono tabular-nums"
                     />
                   </div>
@@ -252,17 +253,11 @@ export default function BacktestsPage() {
                   </div>
                 )}
 
-                {formSuccess && (
-                  <div className="rounded-md bg-positive/5 border border-positive/15 px-3 py-2.5 text-[13px] text-positive">
-                    {formSuccess}
-                  </div>
-                )}
-
                 <div className="flex gap-2 pt-1">
                   <Button type="submit" disabled={isRunning}>
                     {isRunning ? 'Running...' : 'Run Backtest'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetForm}>
+                  <Button type="button" variant="outline" onClick={resetForm} disabled={isRunning}>
                     Cancel
                   </Button>
                 </div>
@@ -275,12 +270,16 @@ export default function BacktestsPage() {
           <h2 className="section-title mb-3">History</h2>
           {isLoading ? (
             <div className="space-y-2">
-              {[1, 2].map(i => (
-                <div key={i} className="h-16 rounded-lg border border-border animate-pulse-subtle bg-muted/30" />
-              ))}
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
             </div>
           ) : backtests.length === 0 && !showForm ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
+            <div className="rounded-lg border border-dashed border-border py-16 text-center">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
               <p className="text-[13px] text-muted-foreground">No backtests yet. Run your first backtest above.</p>
             </div>
           ) : (
@@ -305,7 +304,7 @@ export default function BacktestsPage() {
                         <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()}</span>
                       </div>
                       {metrics && (
-                        <div className="flex items-center gap-3 mt-2 text-[11px] font-mono tabular-nums">
+                        <div className="flex items-center gap-3 mt-1.5 text-[11px] font-mono tabular-nums">
                           <span className={metrics.totalReturn >= 0 ? 'text-positive' : 'text-negative'}>
                             {(metrics.totalReturn * 100).toFixed(2)}%
                           </span>
@@ -321,7 +320,7 @@ export default function BacktestsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-[11px]"
                       onClick={(e) => { e.stopPropagation(); router.push(`/backtests/${backtest.id}`); }}
                     >
                       View

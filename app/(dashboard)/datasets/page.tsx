@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { confirmDialog } from '@/components/ui/alert-dialog';
 import { parseCSV, type PriceRow } from '@/lib/csv/parser';
 
 interface Dataset {
@@ -24,6 +27,7 @@ interface Dataset {
 }
 
 export default function DatasetsPage() {
+  const { toast } = useToast();
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -37,7 +41,6 @@ export default function DatasetsPage() {
     stats: { totalRows: number; validRows: number; invalidRows: number };
   } | null>(null);
   const [importError, setImportError] = useState('');
-  const [importSuccess, setImportSuccess] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDatasets = useCallback(async () => {
@@ -46,13 +49,15 @@ export default function DatasetsPage() {
       if (response.ok) {
         const data = await response.json();
         setDatasets(data.datasets);
+      } else {
+        toast('Failed to load datasets', 'error');
       }
-    } catch (error) {
-      console.error('Failed to fetch datasets:', error);
+    } catch {
+      toast('Network error loading datasets', 'error');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchDatasets();
@@ -64,7 +69,6 @@ export default function DatasetsPage() {
 
     setFileName(file.name);
     setImportError('');
-    setImportSuccess('');
     setParseResult(null);
 
     const text = await file.text();
@@ -87,7 +91,6 @@ export default function DatasetsPage() {
 
     setIsUploading(true);
     setImportError('');
-    setImportSuccess('');
 
     try {
       const createResponse = await fetch('/api/datasets', {
@@ -115,9 +118,7 @@ export default function DatasetsPage() {
       }
 
       const importResult = await importResponse.json();
-      setImportSuccess(
-        `${importResult.importResult.symbolsImported} symbols, ${importResult.importResult.priceRecordsCreated} records imported`
-      );
+      toast(`${importResult.importResult.symbolsImported} symbols, ${importResult.importResult.priceRecordsCreated} records imported`, 'success');
       setDatasetName('');
       setFileName('');
       setCsvContent('');
@@ -133,16 +134,18 @@ export default function DatasetsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this dataset and all its data?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog('Delete dataset', `This will permanently delete "${name}" and all its data.`);
+    if (!confirmed) return;
 
     try {
       const response = await fetch(`/api/datasets/${id}`, { method: 'DELETE' });
       if (response.ok) {
+        toast('Dataset deleted', 'success');
         fetchDatasets();
       }
-    } catch (error) {
-      console.error('Failed to delete dataset:', error);
+    } catch {
+      toast('Failed to delete dataset', 'error');
     }
   };
 
@@ -152,7 +155,7 @@ export default function DatasetsPage() {
         <div>
           <h1 className="page-title">Datasets</h1>
           <p className="page-description">
-            Upload historical price data to use for portfolio construction and backtesting.
+            Upload historical price data for portfolio construction and backtesting.
           </p>
         </div>
       </div>
@@ -171,6 +174,7 @@ export default function DatasetsPage() {
                   placeholder="e.g. US Equities 2018-2024"
                   value={datasetName}
                   onChange={(e) => setDatasetName(e.target.value)}
+                  disabled={isUploading}
                 />
               </div>
 
@@ -182,6 +186,7 @@ export default function DatasetsPage() {
                   accept=".csv"
                   ref={fileInputRef}
                   onChange={handleFileChange}
+                  disabled={isUploading}
                 />
               </div>
             </div>
@@ -198,9 +203,9 @@ export default function DatasetsPage() {
                 {parseResult.errors.length > 0 && (
                   <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5">
                     <p className="text-[11px] font-medium text-negative mb-1 uppercase tracking-wider">Errors</p>
-                    <ul className="text-xs text-negative/80 space-y-0.5">
+                    <ul className="text-xs text-negative/80 space-y-0.5 font-mono">
                       {parseResult.errors.slice(0, 5).map((error, i) => (
-                        <li key={i} className="font-mono">
+                        <li key={i}>
                           Row {error.row}{error.column && ` (${error.column})`}: {error.message}
                         </li>
                       ))}
@@ -265,12 +270,6 @@ export default function DatasetsPage() {
               </div>
             )}
 
-            {importSuccess && (
-              <div className="rounded-md bg-positive/5 border border-positive/15 px-3 py-2.5 text-[13px] text-positive">
-                {importSuccess}
-              </div>
-            )}
-
             <div className="flex pt-1">
               <Button
                 onClick={handleUpload}
@@ -285,14 +284,20 @@ export default function DatasetsPage() {
         <div>
           <h2 className="section-title mb-3">Your Datasets</h2>
           {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2].map(i => (
-                <div key={i} className="h-16 rounded-lg border border-border animate-pulse-subtle bg-muted/30" />
-              ))}
+            <div className="space-y-2">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
             </div>
           ) : datasets.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
-              <p className="text-[13px] text-muted-foreground">No datasets yet. Upload a CSV file to get started.</p>
+            <div className="rounded-lg border border-dashed border-border py-16 text-center">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <p className="text-[13px] text-muted-foreground">No datasets yet. Upload a CSV file above to get started.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -304,7 +309,11 @@ export default function DatasetsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-[13px] font-medium text-foreground">{dataset.name}</h3>
-                      <span className={`status-dot ${dataset.status === 'completed' ? 'status-dot-completed' : dataset.status === 'partial' ? 'status-dot-partial' : 'status-dot-pending'}`} />
+                      <span
+                        className={`status-dot ${dataset.status === 'completed' ? 'status-dot-completed' : dataset.status === 'partial' ? 'status-dot-partial' : 'status-dot-pending'}`}
+                        aria-label={dataset.status}
+                        title={dataset.status}
+                      />
                     </div>
                     <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
                       <span className="font-mono">{dataset.fileName}</span>
@@ -312,7 +321,7 @@ export default function DatasetsPage() {
                       <span>{dataset.assets.length} symbols</span>
                     </div>
                     {dataset.assets.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1 mt-1.5">
                         {dataset.assets.slice(0, 6).map(a => (
                           <span key={a.id} className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono font-medium text-foreground/80">
                             {a.symbol}
@@ -324,14 +333,12 @@ export default function DatasetsPage() {
                       </div>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-negative"
-                    onClick={() => handleDelete(dataset.id)}
+                  <button
+                    className="text-[11px] text-muted-foreground hover:text-negative transition-colors opacity-0 group-hover:opacity-100"
+                    onClick={() => handleDelete(dataset.id, dataset.name)}
                   >
                     Delete
-                  </Button>
+                  </button>
                 </div>
               ))}
             </div>

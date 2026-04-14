@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { confirmDialog } from '@/components/ui/alert-dialog';
 import { validateWeights, parseWeightInput } from '@/lib/validators/portfolio';
 
 interface Asset {
@@ -32,16 +35,17 @@ interface Portfolio {
 }
 
 export default function PortfoliosPage() {
+  const { toast } = useToast();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [formError, setFormError] = useState('');
-  const [formSuccess, setFormSuccess] = useState('');
 
   const fetchPortfolios = useCallback(async () => {
     try {
@@ -50,10 +54,10 @@ export default function PortfoliosPage() {
         const data = await response.json();
         setPortfolios(data.portfolios);
       }
-    } catch (error) {
-      console.error('Failed to fetch portfolios:', error);
+    } catch {
+      toast('Failed to load portfolios', 'error');
     }
-  }, []);
+  }, [toast]);
 
   const fetchAssets = useCallback(async () => {
     try {
@@ -62,10 +66,10 @@ export default function PortfoliosPage() {
         const data = await response.json();
         setAssets(data.assets);
       }
-    } catch (error) {
-      console.error('Failed to fetch assets:', error);
+    } catch {
+      toast('Failed to load assets', 'error');
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     Promise.all([fetchPortfolios(), fetchAssets()]).finally(() => {
@@ -78,7 +82,6 @@ export default function PortfoliosPage() {
     setFormDescription('');
     setHoldings([]);
     setFormError('');
-    setFormSuccess('');
     setEditingId(null);
     setShowForm(false);
   };
@@ -105,13 +108,14 @@ export default function PortfoliosPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
-    setFormSuccess('');
 
     const validation = validateWeights(holdings);
     if (!validation.valid) {
       setFormError(validation.errors[0]);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const url = editingId
@@ -134,11 +138,13 @@ export default function PortfoliosPage() {
         throw new Error(data.error || 'Failed to save portfolio');
       }
 
-      setFormSuccess(editingId ? 'Portfolio updated' : 'Portfolio created');
+      toast(editingId ? 'Portfolio updated' : 'Portfolio created', 'success');
       fetchPortfolios();
-      setTimeout(resetForm, 1200);
+      setTimeout(resetForm, 800);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Failed to save portfolio');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -155,18 +161,18 @@ export default function PortfoliosPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this portfolio?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirmDialog('Delete portfolio', `This will permanently delete "${name}".`);
+    if (!confirmed) return;
 
     try {
-      const response = await fetch(`/api/portfolios/${id}`, {
-        method: 'DELETE',
-      });
+      const response = await fetch(`/api/portfolios/${id}`, { method: 'DELETE' });
       if (response.ok) {
+        toast('Portfolio deleted', 'success');
         fetchPortfolios();
       }
-    } catch (error) {
-      console.error('Failed to delete portfolio:', error);
+    } catch {
+      toast('Failed to delete portfolio', 'error');
     }
   };
 
@@ -206,6 +212,7 @@ export default function PortfoliosPage() {
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -216,6 +223,7 @@ export default function PortfoliosPage() {
                       placeholder="Optional description"
                       value={formDescription}
                       onChange={(e) => setFormDescription(e.target.value)}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -235,9 +243,8 @@ export default function PortfoliosPage() {
                                 placeholder="0"
                                 className="w-[72px] text-right font-mono tabular-nums pr-7"
                                 value={holding.weight || ''}
-                                onChange={(e) =>
-                                  handleWeightChange(holding.assetId, e.target.value)
-                                }
+                                onChange={(e) => handleWeightChange(holding.assetId, e.target.value)}
+                                disabled={isSubmitting}
                               />
                               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">%</span>
                             </div>
@@ -245,6 +252,7 @@ export default function PortfoliosPage() {
                               type="button"
                               className="text-[11px] text-muted-foreground hover:text-negative transition-colors"
                               onClick={() => handleRemoveAsset(holding.assetId)}
+                              disabled={isSubmitting}
                             >
                               Remove
                             </button>
@@ -291,6 +299,7 @@ export default function PortfoliosPage() {
                           size="sm"
                           className="font-mono text-[11px]"
                           onClick={() => handleAddAsset(asset.id)}
+                          disabled={isSubmitting}
                         >
                           + {asset.symbol}
                         </Button>
@@ -309,17 +318,11 @@ export default function PortfoliosPage() {
                   </div>
                 )}
 
-                {formSuccess && (
-                  <div className="rounded-md bg-positive/5 border border-positive/15 px-3 py-2.5 text-[13px] text-positive">
-                    {formSuccess}
-                  </div>
-                )}
-
                 <div className="flex gap-2 pt-1">
-                  <Button type="submit" disabled={holdings.length === 0 || !weightValid}>
-                    {editingId ? 'Update' : 'Create'}
+                  <Button type="submit" disabled={holdings.length === 0 || !weightValid || isSubmitting}>
+                    {isSubmitting ? 'Saving...' : editingId ? 'Update' : 'Create'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetForm}>
+                  <Button type="button" variant="outline" onClick={resetForm} disabled={isSubmitting}>
                     Cancel
                   </Button>
                 </div>
@@ -332,12 +335,19 @@ export default function PortfoliosPage() {
           <h2 className="section-title mb-3">Your Portfolios</h2>
           {isLoading ? (
             <div className="space-y-2">
-              {[1, 2].map(i => (
-                <div key={i} className="h-16 rounded-lg border border-border animate-pulse-subtle bg-muted/30" />
-              ))}
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
             </div>
           ) : portfolios.length === 0 && !showForm ? (
-            <div className="rounded-lg border border-dashed border-border bg-muted/20 py-16 text-center">
+            <div className="rounded-lg border border-dashed border-border py-16 text-center">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+              </div>
               <p className="text-[13px] text-muted-foreground">No portfolios yet. Create your first portfolio above.</p>
             </div>
           ) : (
@@ -367,14 +377,14 @@ export default function PortfoliosPage() {
                     </div>
                   </div>
                   <div className="flex gap-1.5 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(portfolio)}>
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(portfolio)} className="text-[11px]">
                       Edit
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-muted-foreground hover:text-negative"
-                      onClick={() => handleDelete(portfolio.id)}
+                      className="text-[11px] text-muted-foreground hover:text-negative"
+                      onClick={() => handleDelete(portfolio.id, portfolio.name)}
                     >
                       Delete
                     </Button>

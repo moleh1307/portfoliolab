@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MetricGridSkeleton, Skeleton } from '@/components/ui/skeleton';
 import { PortfolioValueChart } from '@/components/charts/portfolio-value-chart';
 import { CumulativeReturnChart } from '@/components/charts/cumulative-return-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
@@ -100,21 +101,19 @@ export default function BacktestDetailPage() {
     }
   };
 
-  if (isLoading) {
+if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="space-y-3">
-          <div className="h-6 w-48 rounded bg-muted/60 animate-pulse-subtle" />
-          <div className="h-4 w-32 rounded bg-muted/40 animate-pulse-subtle" />
-        </div>
+      <div className="space-y-6 pt-16">
+        <MetricGridSkeleton />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  if (error || !backtest) {
+if (error || !backtest) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/backtests')}>
+        <Button variant="ghost" size="sm" className="-ml-2" onClick={() => router.push('/backtests')}>
           &larr; Back
         </Button>
         <div className="rounded-lg border border-dashed border-border py-16 text-center">

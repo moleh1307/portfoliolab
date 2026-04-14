@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'PortfolioLab',
-  description: 'Build, test, and analyze investment portfolios using historical market data',
+  description: 'Portfolio backtesting and analysis',
 };
 
 export default function RootLayout({

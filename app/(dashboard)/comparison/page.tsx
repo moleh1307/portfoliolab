@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ComparisonChart } from '@/components/charts/comparison-chart';
 
 interface Backtest {
@@ -135,10 +136,10 @@ export default function ComparisonPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex gap-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-7 w-24 rounded-md bg-muted/50 animate-pulse-subtle" />
-                ))}
+              <div className="flex gap-1.5">
+                <Skeleton className="h-7 w-20 rounded-md" />
+                <Skeleton className="h-7 w-20 rounded-md" />
+                <Skeleton className="h-7 w-20 rounded-md" />
               </div>
             ) : backtests.length === 0 ? (
               <p className="text-[13px] text-muted-foreground">
