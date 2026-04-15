@@ -127,7 +127,7 @@ export default function DashboardLayout({
           </div>
         </header>
         <main id="main-content" className="flex-1">
-          <div className="mx-auto max-w-6xl px-5 py-8 animate-page-in">{children}</div>
+          <div key={pathname} className="mx-auto max-w-6xl px-5 py-8 animate-page-in">{children}</div>
         </main>
         <footer className="border-t border-border">
           <div className="mx-auto max-w-6xl px-5 py-4">
