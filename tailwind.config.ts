@@ -74,11 +74,16 @@ const config: Config = {
           '0%': { opacity: '1', transform: 'translateY(0)' },
           '100%': { opacity: '0', transform: 'translateY(-4px)' },
         },
+        'shimmer': {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
         'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
         'toast-out': 'toast-out 0.2s ease-in forwards',
+        'shimmer': 'shimmer 2s ease-in-out infinite',
       },
     },
   },
