@@ -8,6 +8,8 @@ import { MetricGridSkeleton, Skeleton } from '@/components/ui/skeleton';
 import { PortfolioValueChart } from '@/components/charts/portfolio-value-chart';
 import { CumulativeReturnChart } from '@/components/charts/cumulative-return-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
+import { useToast } from '@/components/ui/toast';
+import { confirmDialog } from '@/components/ui/alert-dialog';
 
 interface BacktestPoint {
   id: string;
@@ -69,10 +71,12 @@ function MetricTile({ label, value, positive, subtext }: { label: string; value:
 export default function BacktestDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const [backtest, setBacktest] = useState<Backtest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAllReturns, setShowAllReturns] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchBacktest = useCallback(async () => {
     try {
@@ -100,6 +104,26 @@ export default function BacktestDetailPage() {
       return JSON.parse(metricsJson);
     } catch {
       return null;
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = await confirmDialog('Delete backtest', `This will permanently delete "${backtest?.portfolio.name}" and all its data.`);
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/backtests/${params.id}`, { method: 'DELETE' });
+      if (response.ok) {
+        toast('Backtest deleted', 'success');
+        router.push('/backtests');
+      } else {
+        toast('Failed to delete backtest', 'error');
+      }
+    } catch {
+      toast('Failed to delete backtest', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -148,12 +172,23 @@ if (isLoading) {
   return (
     <div className="space-y-8">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-2 mb-3 text-[13px]" onClick={() => router.push('/backtests')}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-          </svg>
-          Back
-        </Button>
+        <div className="flex items-center justify-between mb-3">
+          <Button variant="ghost" size="sm" className="-ml-2 text-[13px]" onClick={() => router.push('/backtests')}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[11px] text-muted-foreground hover:text-negative"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </div>
         <div className="flex items-center gap-2">
           <h1 className="page-title">{backtest.portfolio.name}</h1>
           <span
