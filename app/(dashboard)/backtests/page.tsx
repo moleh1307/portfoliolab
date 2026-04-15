@@ -200,6 +200,7 @@ export default function BacktestsPage() {
                       required
                       disabled={isRunning}
                     />
+                    <p className="text-[11px] text-muted-foreground/70">Earliest available date from your dataset</p>
                   </div>
 
                   <div className="space-y-1.5">
@@ -212,6 +213,7 @@ export default function BacktestsPage() {
                       required
                       disabled={isRunning}
                     />
+                    <p className="text-[11px] text-muted-foreground/70">Latest available date from your dataset</p>
                   </div>
                 </div>
 
