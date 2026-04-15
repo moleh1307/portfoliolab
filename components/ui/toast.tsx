@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useCallback, createContext, useContext } from 'react';
 
 type Toast = {
   id: string;
   message: string;
   type: 'success' | 'error';
+  exiting?: boolean;
 };
 
 type ToastContextType = {
@@ -25,8 +26,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
+      setToasts((prev) => prev.map((t) => t.id === id ? { ...t, exiting: true } : t));
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 200);
+    }, 2800);
   }, []);
 
   return (
@@ -36,13 +40,26 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`animate-fade-in rounded-lg border px-4 py-3 text-[13px] shadow-card max-w-sm ${
+            className={`flex items-center gap-2.5 rounded-lg border px-4 py-3 text-[13px] shadow-card max-w-sm ${
+              t.exiting
+                ? 'animate-toast-out'
+                : 'animate-fade-in'
+            } ${
               t.type === 'success'
                 ? 'bg-positive/5 border-positive/15 text-positive'
                 : 'bg-negative/5 border-negative/15 text-negative'
             }`}
           >
-            {t.message}
+            {t.type === 'success' ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            )}
+            <span>{t.message}</span>
           </div>
         ))}
       </div>

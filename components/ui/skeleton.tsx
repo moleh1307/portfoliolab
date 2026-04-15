@@ -41,13 +41,29 @@ export function CardSkeleton({ lines = 3 }: { lines?: number }) {
 
 export function MetricGridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-border bg-card px-4 py-3 space-y-2">
-          <div className="h-2.5 w-16 rounded bg-muted/60 animate-pulse" />
-          <div className="h-5 w-20 rounded bg-muted/60 animate-pulse" />
+    <div className="space-y-3">
+      <div>
+        <div className="h-2.5 w-14 rounded bg-muted/60 animate-pulse mb-2" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card px-4 py-3 space-y-2">
+              <div className="h-2.5 w-16 rounded bg-muted/60 animate-pulse" />
+              <div className="h-5 w-20 rounded bg-muted/60 animate-pulse" />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
+      <div>
+        <div className="h-2.5 w-10 rounded bg-muted/60 animate-pulse mb-2" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-lg border border-border bg-card px-4 py-3 space-y-2">
+              <div className="h-2.5 w-16 rounded bg-muted/60 animate-pulse" />
+              <div className="h-5 w-20 rounded bg-muted/60 animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

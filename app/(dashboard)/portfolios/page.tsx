@@ -197,7 +197,7 @@ export default function PortfoliosPage() {
 
       <div className="space-y-6">
         {showForm && (
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader>
               <CardTitle>{editingId ? 'Edit Portfolio' : 'New Portfolio'}</CardTitle>
             </CardHeader>
@@ -332,7 +332,7 @@ export default function PortfoliosPage() {
         )}
 
         <div>
-          <h2 className="section-title mb-3">Your Portfolios</h2>
+          <h2 className="section-title mb-3">Your Portfolios{portfolios.length > 0 && <span className="text-muted-foreground font-normal ml-1.5">({portfolios.length})</span>}</h2>
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-16 w-full" />
@@ -364,7 +364,30 @@ export default function PortfoliosPage() {
                         {portfolio.description}
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    {portfolio.holdings.length > 0 && (
+                      <div className="flex h-1.5 w-full max-w-[200px] overflow-hidden rounded-full bg-muted mt-2">
+                        {portfolio.holdings.map((h, i) => {
+                          const colors = [
+                            'hsl(var(--chart-1))',
+                            'hsl(var(--chart-2))',
+                            'hsl(var(--chart-4))',
+                            'hsl(var(--chart-5))',
+                            'hsl(var(--muted-foreground))',
+                          ];
+                          return (
+                            <div
+                              key={h.assetId}
+                              className="h-full"
+                              style={{
+                                width: `${h.weight}%`,
+                                backgroundColor: colors[i % colors.length],
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1 mt-1.5">
                       {portfolio.holdings.map((h) => (
                         <span
                           key={h.assetId}

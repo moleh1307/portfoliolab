@@ -165,7 +165,7 @@ export default function BacktestsPage() {
 
       <div className="space-y-6">
         {showForm && (
-          <Card>
+          <Card className="animate-fade-in">
             <CardHeader>
               <CardTitle>Configure</CardTitle>
             </CardHeader>
@@ -267,7 +267,7 @@ export default function BacktestsPage() {
         )}
 
         <div>
-          <h2 className="section-title mb-3">History</h2>
+          <h2 className="section-title mb-3">History{backtests.length > 0 && <span className="text-muted-foreground font-normal ml-1.5">({backtests.length})</span>}</h2>
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-16 w-full" />

@@ -56,6 +56,7 @@ const config: Config = {
       boxShadow: {
         'subtle': '0 1px 2px 0 rgb(0 0 0 / 0.03)',
         'card': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+        'elevated': '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.04)',
       },
       transitionDuration: {
         '150': '150ms',
@@ -69,10 +70,15 @@ const config: Config = {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.6' },
         },
+        'toast-out': {
+          '0%': { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-4px)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
         'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+        'toast-out': 'toast-out 0.2s ease-in forwards',
       },
     },
   },

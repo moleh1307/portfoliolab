@@ -161,7 +161,7 @@ export default function DatasetsPage() {
       </div>
 
       <div className="space-y-6">
-        <Card>
+        <Card className="animate-fade-in">
           <CardHeader>
             <CardTitle>Upload Dataset</CardTitle>
           </CardHeader>
@@ -282,7 +282,7 @@ export default function DatasetsPage() {
         </Card>
 
         <div>
-          <h2 className="section-title mb-3">Your Datasets</h2>
+          <h2 className="section-title mb-3">Your Datasets{datasets.length > 0 && <span className="text-muted-foreground font-normal ml-1.5">({datasets.length})</span>}</h2>
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-14 w-full" />

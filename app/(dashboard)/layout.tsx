@@ -124,6 +124,13 @@ export default function DashboardLayout({
         <main id="main-content" className="flex-1">
           <div className="mx-auto max-w-6xl px-5 py-8 animate-page-in">{children}</div>
         </main>
+        <footer className="border-t border-border">
+          <div className="mx-auto max-w-6xl px-5 py-4">
+            <p className="text-[11px] text-muted-foreground/60 text-center">
+              PortfolioLab &mdash; Portfolio backtesting and analytics
+            </p>
+          </div>
+        </footer>
         <AlertDialog />
       </div>
     </ToastProvider>

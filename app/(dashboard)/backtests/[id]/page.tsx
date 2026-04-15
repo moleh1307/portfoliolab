@@ -115,12 +115,20 @@ if (isLoading) {
 if (error || !backtest) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" size="sm" className="-ml-2" onClick={() => router.push('/backtests')}>
-          &larr; Back
+        <Button variant="ghost" size="sm" className="-ml-2 text-[13px]" onClick={() => router.push('/backtests')}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back
         </Button>
-        <div className="rounded-lg border border-dashed border-border py-16 text-center">
-          <p className="text-[13px] text-muted-foreground">{error || 'Backtest not found'}</p>
-        </div>
+<div className="rounded-lg border border-dashed border-border py-16 text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            </div>
+            <p className="text-[13px] text-muted-foreground">{error || 'Backtest not found'}</p>
+          </div>
       </div>
     );
   }
@@ -136,10 +144,26 @@ if (error || !backtest) {
   return (
     <div className="space-y-8">
       <div>
-        <Button variant="ghost" size="sm" className="-ml-2 mb-3" onClick={() => router.push('/backtests')}>
-          &larr; Back
+        <Button variant="ghost" size="sm" className="-ml-2 mb-3 text-[13px]" onClick={() => router.push('/backtests')}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back
         </Button>
-        <h1 className="page-title">{backtest.portfolio.name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="page-title">{backtest.portfolio.name}</h1>
+          <span
+            className={`status-dot ${
+              backtest.status === 'completed'
+                ? 'status-dot-completed'
+                : backtest.status === 'partial'
+                ? 'status-dot-partial'
+                : 'status-dot-pending'
+            }`}
+            aria-label={`Status: ${backtest.status}`}
+            title={backtest.status}
+          />
+        </div>
         <div className="flex items-center gap-2 mt-1.5 text-[12px] text-muted-foreground">
           <span className="font-mono tabular-nums">
             {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
