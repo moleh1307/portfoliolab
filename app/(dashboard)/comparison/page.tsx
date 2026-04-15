@@ -154,10 +154,14 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="flex gap-1.5">
-                <Skeleton className="h-7 w-20 rounded-md" />
-                <Skeleton className="h-7 w-20 rounded-md" />
-                <Skeleton className="h-7 w-20 rounded-md" />
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-1.5">
+                  <Skeleton className="h-7 w-20 rounded-md" />
+                  <Skeleton className="h-7 w-24 rounded-md" />
+                  <Skeleton className="h-7 w-16 rounded-md" />
+                  <Skeleton className="h-7 w-28 rounded-md" />
+                </div>
+                <Skeleton className="h-3 w-32" />
               </div>
             ) : backtests.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border py-12 text-center">

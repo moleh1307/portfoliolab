@@ -330,7 +330,7 @@ export default function DatasetsPage() {
               {datasets.map((dataset) => (
                 <div
                   key={dataset.id}
-                  className="group flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                  className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
