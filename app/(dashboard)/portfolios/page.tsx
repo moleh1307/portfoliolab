@@ -366,7 +366,7 @@ export default function PortfoliosPage() {
               {portfolios.map((portfolio) => (
                 <div
                   key={portfolio.id}
-                  className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30"
+                  className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle"
                 >
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[13px] font-medium">{portfolio.name}</h3>

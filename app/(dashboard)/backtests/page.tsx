@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/toast';
@@ -173,9 +174,8 @@ export default function BacktestsPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="portfolio">Portfolio</Label>
-                  <select
+                  <Select
                     id="portfolio"
-                    className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20 disabled:opacity-50"
                     value={selectedPortfolioId}
                     onChange={(e) => setSelectedPortfolioId(e.target.value)}
                     disabled={isRunning}
@@ -186,7 +186,7 @@ export default function BacktestsPage() {
                         {portfolio.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -218,9 +218,8 @@ export default function BacktestsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="rebalance">Rebalance</Label>
-                    <select
+                    <Select
                       id="rebalance"
-                      className="flex h-8 w-full rounded-md border border-border bg-background px-3 py-1.5 text-[13px] text-foreground transition-colors focus-visible:border-foreground/40 focus-visible:ring-1 focus-visible:ring-foreground/20 disabled:opacity-50"
                       value={rebalanceFrequency}
                       onChange={(e) => setRebalanceFrequency(e.target.value)}
                       disabled={isRunning}
@@ -228,7 +227,7 @@ export default function BacktestsPage() {
                       <option value="none">None</option>
                       <option value="monthly">Monthly</option>
                       <option value="quarterly">Quarterly</option>
-                    </select>
+                    </Select>
                   </div>
 
                   <div className="space-y-1.5">

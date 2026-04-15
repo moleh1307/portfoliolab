@@ -64,7 +64,15 @@ export function ComparisonChart({ data, lines }: ComparisonChartProps) {
             fontFamily: 'Inter, sans-serif',
             paddingTop: '12px',
           }}
-          formatter={(value) => <span style={{ color: 'hsl(var(--foreground))' }}>{value}</span>}
+          formatter={(value, entry) => {
+            const color = (entry as any)?.color || 'currentColor';
+            return (
+              <span style={{ color: 'hsl(var(--foreground))', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color, display: 'inline-block' }} />
+                {value}
+              </span>
+            );
+          }}
         />
         {lines.map((line) => (
           <Line
