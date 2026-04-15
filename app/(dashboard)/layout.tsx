@@ -73,9 +73,9 @@ export default function DashboardLayout({
                   href="/datasets"
                   className="flex items-center gap-2"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-[3px] bg-foreground">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-[3px] bg-zinc-900 dark:bg-zinc-100">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1 9L4 3L7 7L10 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1 9L4 3L7 7L10 2" stroke="white" className="dark:stroke-zinc-900" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                   <span className="text-[13px] font-semibold tracking-tight text-foreground">
