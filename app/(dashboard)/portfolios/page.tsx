@@ -195,7 +195,7 @@ export default function PortfoliosPage() {
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {showForm && (
           <Card className="animate-fade-in">
             <CardHeader>
@@ -230,7 +230,7 @@ export default function PortfoliosPage() {
 
                 <div className="space-y-2">
                   <Label>Holdings</Label>
-                  <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2.5">
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2.5">
                     {holdings.map((holding) => {
                       const asset = assets.find((a) => a.id === holding.assetId);
                       return (
@@ -324,7 +324,7 @@ export default function PortfoliosPage() {
                 </div>
 
                 {formError && (
-                  <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
+                  <div className="rounded-lg bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
                     {formError}
                   </div>
                 )}
@@ -366,7 +366,7 @@ export default function PortfoliosPage() {
               {portfolios.map((portfolio) => (
                 <div
                   key={portfolio.id}
-                  className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle"
+                  className="group flex items-start justify-between rounded-xl border border-border/60 bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle"
                 >
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[13px] font-medium">{portfolio.name}</h3>

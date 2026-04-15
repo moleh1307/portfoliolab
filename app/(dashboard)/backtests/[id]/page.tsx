@@ -58,12 +58,14 @@ interface SummaryMetrics {
 
 function MetricTile({ label, value, positive, subtext }: { label: string; value: string; positive?: boolean; subtext?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/20">
+    <div className="px-4 py-3">
       <p className="metric-label mb-1.5">{label}</p>
-      <p className={`metric-value ${positive !== undefined ? (positive ? 'text-positive' : 'text-negative') : ''}`}>
+      <p className={`text-lg font-semibold font-mono tracking-tight tabular-nums leading-none ${
+        positive !== undefined ? (positive ? 'text-positive' : 'text-negative') : ''
+      }`}>
         {value}
       </p>
-      {subtext && <p className="text-[10px] text-muted-foreground mt-1 font-mono tabular-nums">{subtext}</p>}
+      {subtext && <p className="text-[10px] text-muted-foreground/70 mt-1 font-mono tabular-nums">{subtext}</p>}
     </div>
   );
 }
@@ -127,15 +129,12 @@ export default function BacktestDetailPage() {
     }
   };
 
-if (isLoading) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-1.5 w-1.5 rounded-full" />
-        </div>
+        <Skeleton className="h-32 w-full rounded-xl" />
         <MetricGridSkeleton />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -149,7 +148,7 @@ if (isLoading) {
           </svg>
           Back
         </Button>
-        <div className="rounded-lg border border-dashed border-border py-16 text-center">
+        <div className="rounded-xl border border-dashed border-border py-16 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
@@ -170,102 +169,109 @@ if (isLoading) {
   }));
 
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <Button variant="ghost" size="sm" className="-ml-2 text-[13px]" onClick={() => router.push('/backtests')}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-              <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
-            </svg>
-            Back
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[11px] text-muted-foreground hover:text-negative"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <h1 className="page-title">{backtest.portfolio.name}</h1>
-          <span
-            className={`status-dot ${
-              backtest.status === 'completed'
-                ? 'status-dot-completed'
-                : backtest.status === 'partial'
-                ? 'status-dot-partial'
-                : 'status-dot-pending'
-            }`}
-            aria-label={`Status: ${backtest.status}`}
-            title={backtest.status}
-          />
-        </div>
-        <div className="flex items-center gap-2 mt-1.5 text-[12px] text-muted-foreground">
-          <span className="font-mono tabular-nums">
-            {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
-          </span>
-          <span className="text-border/60">&middot;</span>
-          <span>{backtest.rebalanceFrequency === 'none' ? 'No rebalancing' : `${backtest.rebalanceFrequency} rebalancing`}</span>
-          <span className="text-border/60">&middot;</span>
-          <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()} initial</span>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" className="-ml-2 text-[13px]" onClick={() => router.push('/backtests')}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+            <line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" />
+          </svg>
+          Back
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-[11px] text-muted-foreground hover:text-negative"
+          onClick={handleDelete}
+          disabled={isDeleting}
+        >
+          {isDeleting ? 'Deleting...' : 'Delete'}
+        </Button>
       </div>
 
       {metrics && (
-        <div className="rounded-lg border border-border bg-card p-5">
-          <div className="space-y-4">
+        <div className="hero-metric shadow-hero animate-fade-in-up">
+          <div className="flex items-start justify-between">
             <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Returns</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <MetricTile
-                  label="Total Return"
-                  value={`${(metrics.totalReturn * 100).toFixed(2)}%`}
-                  positive={metrics.totalReturn >= 0}
-                  subtext={`${metrics.numberOfObservations.toLocaleString()} days`}
-                />
-                <MetricTile
-                  label="Annualized Return"
-                  value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
-                  positive={metrics.annualizedReturn >= 0}
-                />
-                <MetricTile
-                  label="Best Day"
-                  value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
-                  positive={true}
-                />
-                <MetricTile
-                  label="Worst Day"
-                  value={`${(metrics.worstDay * 100).toFixed(2)}%`}
-                  positive={false}
-                />
-              </div>
+              <p className="hero-metric-label">Total Return</p>
+              <p className="hero-metric-value">
+                {(metrics.totalReturn * 100).toFixed(2)}%
+              </p>
+              <p className="hero-metric-sub">
+                {metrics.numberOfObservations.toLocaleString()} trading days &middot; {(metrics.annualizedReturn * 100).toFixed(2)}% annualized
+              </p>
             </div>
-            <div className="border-t border-border/60" />
-            <div>
-              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Risk</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <MetricTile
-                  label="Annualized Vol"
-                  value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
-                />
-                <MetricTile
-                  label="Sharpe Ratio"
-                  value={metrics.sharpeRatio.toFixed(2)}
-                />
-                <MetricTile
-                  label="Max Drawdown"
-                  value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
-                  positive={false}
-                />
-                <MetricTile
-                  label="Observations"
-                  value={metrics.numberOfObservations.toLocaleString()}
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`status-dot ${
+                  backtest.status === 'completed'
+                    ? 'status-dot-completed'
+                    : backtest.status === 'partial'
+                    ? 'status-dot-partial'
+                    : 'status-dot-pending'
+                }`}
+                aria-label={`Status: ${backtest.status}`}
+                title={backtest.status}
+              />
             </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 -mt-1">
+        <h1 className="page-title">{backtest.portfolio.name}</h1>
+      </div>
+      <div className="flex items-center gap-2 text-[12px] text-muted-foreground -mt-1">
+        <span className="font-mono tabular-nums">
+          {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
+        </span>
+        <span className="text-border/60">&middot;</span>
+        <span>{backtest.rebalanceFrequency === 'none' ? 'No rebalancing' : `${backtest.rebalanceFrequency} rebalancing`}</span>
+        <span className="text-border/60">&middot;</span>
+        <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()} initial</span>
+      </div>
+
+      {metrics && (
+        <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/60">
+            <MetricTile
+              label="Ann. Return"
+              value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
+              positive={metrics.annualizedReturn >= 0}
+            />
+            <MetricTile
+              label="Sharpe"
+              value={metrics.sharpeRatio.toFixed(2)}
+            />
+            <MetricTile
+              label="Ann. Vol"
+              value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
+            />
+            <MetricTile
+              label="Max DD"
+              value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
+              positive={false}
+            />
+          </div>
+          <div className="border-t border-border/60" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/60">
+            <MetricTile
+              label="Best Day"
+              value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
+              positive={true}
+            />
+            <MetricTile
+              label="Worst Day"
+              value={`${(metrics.worstDay * 100).toFixed(2)}%`}
+              positive={false}
+            />
+            <MetricTile
+              label="Observations"
+              value={metrics.numberOfObservations.toLocaleString()}
+            />
+            <MetricTile
+              label="End Value"
+              value={`$${(backtest.initialCapital * (1 + metrics.totalReturn)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+            />
           </div>
         </div>
       )}
@@ -274,7 +280,7 @@ if (isLoading) {
         <CardHeader>
           <CardTitle>Portfolio Value</CardTitle>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent>
           <PortfolioValueChart data={chartData} />
         </CardContent>
       </Card>
@@ -284,7 +290,7 @@ if (isLoading) {
           <CardHeader>
             <CardTitle>Cumulative Return</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent>
             <CumulativeReturnChart data={chartData} />
           </CardContent>
         </Card>
@@ -293,7 +299,7 @@ if (isLoading) {
           <CardHeader>
             <CardTitle>Drawdown</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent>
             <DrawdownChart data={chartData} />
           </CardContent>
         </Card>
@@ -303,8 +309,8 @@ if (isLoading) {
         <CardHeader>
           <CardTitle>Asset Allocation</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+        <CardContent>
+          <div className="flex h-2 w-full overflow-hidden rounded-full bg-muted mb-4">
             {backtest.portfolio.holdings.map((holding, i) => {
               const colors = [
                 'hsl(var(--chart-1))',
@@ -327,14 +333,14 @@ if (isLoading) {
           </div>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-border/60">
                 <th className="table-header text-left py-2">Symbol</th>
                 <th className="table-header text-right py-2">Weight</th>
               </tr>
             </thead>
             <tbody>
               {backtest.portfolio.holdings.map((holding) => (
-                <tr key={holding.assetId} className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/20">
+                <tr key={holding.assetId} className="border-b border-border/30 last:border-0 transition-colors hover:bg-muted/20">
                   <td className="py-2.5">
                     <span className="font-mono font-medium text-[13px]">{holding.asset.symbol}</span>
                     {holding.asset.displayName && (
@@ -367,7 +373,7 @@ if (isLoading) {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border/60">
                   <th className="table-header text-left py-2">Date</th>
                   <th className="table-header text-right py-2">Value</th>
                   <th className="table-header text-right py-2">Return</th>
@@ -376,7 +382,7 @@ if (isLoading) {
               </thead>
               <tbody>
                 {(showAllReturns ? backtest.dataPoints : backtest.dataPoints.slice(-30)).map((dp) => (
-                  <tr key={dp.id} className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/20">
+                  <tr key={dp.id} className="border-b border-border/30 last:border-0 transition-colors hover:bg-muted/20">
                     <td className="py-2 font-mono text-xs tabular-nums">{new Date(dp.date).toLocaleDateString()}</td>
                     <td className="py-2 text-right font-mono text-xs tabular-nums">
                       ${dp.portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}

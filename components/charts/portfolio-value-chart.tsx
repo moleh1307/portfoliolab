@@ -8,7 +8,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Area,
-  CartesianGrid,
 } from 'recharts';
 
 interface PortfolioValueChartProps {
@@ -17,9 +16,14 @@ interface PortfolioValueChartProps {
 
 export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
+    <ResponsiveContainer width="100%" height={280}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+        <defs>
+          <linearGradient id="portfolioValueGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.06} />
+            <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey="date"
           axisLine={false}
@@ -35,29 +39,23 @@ export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
           tickLine={false}
           tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-          width={48}
+          width={52}
         />
         <Tooltip
           contentStyle={{
             backgroundColor: 'hsl(var(--card))',
             border: '1px solid hsl(var(--border))',
-            borderRadius: '6px',
-            boxShadow: '0 4px 12px rgb(0 0 0 / 0.08)',
+            borderRadius: '8px',
+            boxShadow: '0 8px 24px rgb(0 0 0 / 0.08)',
             fontSize: '12px',
             fontFamily: "'IBM Plex Mono', monospace",
-            padding: '10px 12px',
+            padding: '10px 14px',
           }}
           labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 600, fontFamily: 'Inter, sans-serif', fontSize: '11px', letterSpacing: '0.02em' }}
-          cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }}
+          cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1, strokeDasharray: '4 4' }}
           labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Value']}
         />
-        <defs>
-          <linearGradient id="portfolioValueGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.08} />
-            <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
-          </linearGradient>
-        </defs>
         <Area
           type="monotone"
           dataKey="value"
@@ -68,9 +66,9 @@ export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
           type="monotone"
           dataKey="value"
           stroke="hsl(var(--chart-1))"
-          strokeWidth={1.5}
+          strokeWidth={2}
           dot={false}
-          activeDot={{ r: 3, fill: 'hsl(var(--chart-1))', strokeWidth: 0 }}
+          activeDot={{ r: 4, fill: 'hsl(var(--chart-1))', strokeWidth: 2, stroke: 'hsl(var(--card))' }}
         />
       </LineChart>
     </ResponsiveContainer>

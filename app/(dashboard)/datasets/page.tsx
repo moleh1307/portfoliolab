@@ -160,7 +160,7 @@ export default function DatasetsPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         <Card className="animate-fade-in">
           <CardHeader>
             <CardTitle>Upload Dataset</CardTitle>
@@ -182,7 +182,7 @@ export default function DatasetsPage() {
                 <Label>CSV File</Label>
                 <label
                   htmlFor="csvFile"
-                  className="flex flex-col items-center justify-center h-[120px] rounded-lg border-2 border-dashed border-border/60 bg-muted/20 cursor-pointer transition-colors hover:bg-muted/30 hover:border-border"
+                  className="flex flex-col items-center justify-center h-[120px] rounded-xl border-2 border-dashed border-border/60 bg-muted/20 cursor-pointer transition-colors hover:bg-muted/30 hover:border-border"
                 >
                   {fileName ? (
                     <div className="text-center">
@@ -218,7 +218,7 @@ export default function DatasetsPage() {
             </div>
 
             {parseResult && (
-              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-[13px] font-medium text-foreground">File Preview</span>
                   <span className={`text-xs font-mono tabular-nums ${parseResult.success ? 'text-positive' : 'text-negative'}`}>
@@ -227,7 +227,7 @@ export default function DatasetsPage() {
                 </div>
 
                 {parseResult.errors.length > 0 && (
-                  <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5">
+                  <div className="rounded-lg bg-negative/5 border border-negative/15 px-3 py-2.5">
                     <p className="text-[11px] font-medium text-negative mb-1 uppercase tracking-wider">Errors</p>
                     <ul className="text-xs text-negative/80 space-y-0.5 font-mono">
                       {parseResult.errors.slice(0, 5).map((error, i) => (
@@ -246,7 +246,7 @@ export default function DatasetsPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-border">
+                        <tr className="border-b border-border/60">
                           <th className="table-header text-left py-2 pr-4">Date</th>
                           <th className="table-header text-left py-2 pr-4">Symbol</th>
                           <th className="table-header text-right py-2 pl-4">Close</th>
@@ -263,7 +263,7 @@ export default function DatasetsPage() {
                       </thead>
                       <tbody>
                         {parseResult.rows.slice(0, 5).map((row, i) => (
-                          <tr key={i} className="border-b border-border/40 last:border-0">
+                          <tr key={i} className="border-b border-border/30 last:border-0">
                             <td className="py-1.5 pr-4 font-mono text-xs tabular-nums">{row.date}</td>
                             <td className="py-1.5 pr-4 text-[13px] font-medium">{row.symbol}</td>
                             <td className="py-1.5 pl-4 text-right font-mono text-xs tabular-nums">${row.close.toFixed(2)}</td>
@@ -291,7 +291,7 @@ export default function DatasetsPage() {
             )}
 
             {importError && (
-              <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
+              <div className="rounded-lg bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
                 {importError}
               </div>
             )}
@@ -311,11 +311,11 @@ export default function DatasetsPage() {
           <h2 className="section-title mb-3">Your Datasets{datasets.length > 0 && <span className="text-muted-foreground font-normal ml-1.5">({datasets.length})</span>}</h2>
           {isLoading ? (
             <div className="space-y-2">
-              <Skeleton className="h-14 w-full" />
-              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full rounded-lg" />
+              <Skeleton className="h-14 w-full rounded-lg" />
             </div>
           ) : datasets.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border py-16 text-center">
+            <div className="rounded-xl border border-dashed border-border py-16 text-center">
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -330,7 +330,7 @@ export default function DatasetsPage() {
               {datasets.map((dataset) => (
                 <div
                   key={dataset.id}
-                  className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/30"
+                  className="group flex items-start justify-between rounded-xl border border-border/60 bg-card px-4 py-3 transition-all hover:bg-muted/30 hover:shadow-subtle"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">

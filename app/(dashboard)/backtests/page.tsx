@@ -164,7 +164,7 @@ export default function BacktestsPage() {
         )}
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {showForm && (
           <Card className="animate-fade-in">
             <CardHeader>
@@ -271,11 +271,11 @@ export default function BacktestsPage() {
           <h2 className="section-title mb-3">History{backtests.length > 0 && <span className="text-muted-foreground font-normal ml-1.5">({backtests.length})</span>}</h2>
           {isLoading ? (
             <div className="space-y-2">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full rounded-lg" />
+              <Skeleton className="h-16 w-full rounded-lg" />
             </div>
           ) : backtests.length === 0 && !showForm ? (
-            <div className="rounded-lg border border-dashed border-border py-16 text-center">
+            <div className="rounded-xl border border-dashed border-border py-16 text-center">
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -290,7 +290,7 @@ export default function BacktestsPage() {
                 return (
                   <button
                     key={backtest.id}
-                    className="group flex items-start justify-between w-full rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30 text-left"
+                    className="group flex items-start justify-between w-full rounded-xl border border-border/60 bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle text-left"
                     onClick={() => router.push(`/backtests/${backtest.id}`)}
                   >
                     <div className="min-w-0 flex-1">

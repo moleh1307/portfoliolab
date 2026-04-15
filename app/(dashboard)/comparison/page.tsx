@@ -147,7 +147,7 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>Select Backtests</CardTitle>
@@ -156,10 +156,10 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
             {isLoading ? (
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-1.5">
-                  <Skeleton className="h-7 w-20 rounded-md" />
-                  <Skeleton className="h-7 w-24 rounded-md" />
-                  <Skeleton className="h-7 w-16 rounded-md" />
-                  <Skeleton className="h-7 w-28 rounded-md" />
+                  <Skeleton className="h-7 w-20 rounded-lg" />
+                  <Skeleton className="h-7 w-24 rounded-lg" />
+                  <Skeleton className="h-7 w-16 rounded-lg" />
+                  <Skeleton className="h-7 w-28 rounded-lg" />
                 </div>
                 <Skeleton className="h-3 w-32" />
               </div>
@@ -184,7 +184,7 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
                         onClick={() => toggleBacktest(backtest.id)}
                         disabled={isDisabled}
                         aria-pressed={isSelected}
-                        className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition-all duration-150 border ${
+                        className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all duration-150 border ${
                           isSelected
                             ? 'bg-foreground text-background border-foreground'
                             : isDisabled
