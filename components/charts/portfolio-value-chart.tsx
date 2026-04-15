@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  Area,
 } from 'recharts';
 
 interface PortfolioValueChartProps {
@@ -48,6 +49,18 @@ export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
           cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }}
           labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Value']}
+        />
+        <defs>
+          <linearGradient id="portfolioValueGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={0.08} />
+            <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area
+          type="monotone"
+          dataKey="value"
+          stroke="none"
+          fill="url(#portfolioValueGradient)"
         />
         <Line
           type="monotone"

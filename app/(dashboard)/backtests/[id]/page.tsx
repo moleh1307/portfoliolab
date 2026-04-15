@@ -237,23 +237,25 @@ if (error || !backtest) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cumulative Return</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <CumulativeReturnChart data={chartData} />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Cumulative Return</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <CumulativeReturnChart data={chartData} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Drawdown</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <DrawdownChart data={chartData} />
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Drawdown</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <DrawdownChart data={chartData} />
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader>

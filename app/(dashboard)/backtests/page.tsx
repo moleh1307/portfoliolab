@@ -287,9 +287,9 @@ export default function BacktestsPage() {
               {backtests.map((backtest) => {
                 const metrics = formatMetrics(backtest.summaryMetrics);
                 return (
-                  <div
+                  <button
                     key={backtest.id}
-                    className="group flex items-start justify-between rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30 cursor-pointer"
+                    className="group flex items-start justify-between w-full rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30 text-left"
                     onClick={() => router.push(`/backtests/${backtest.id}`)}
                   >
                     <div className="min-w-0 flex-1">
@@ -330,15 +330,10 @@ export default function BacktestsPage() {
                         </div>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-[11px]"
-                      onClick={(e) => { e.stopPropagation(); router.push(`/backtests/${backtest.id}`); }}
-                    >
-                      View
-                    </Button>
-                  </div>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/40 shrink-0 mt-0.5 transition-colors group-hover:text-muted-foreground">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
                 );
               })}
             </div>

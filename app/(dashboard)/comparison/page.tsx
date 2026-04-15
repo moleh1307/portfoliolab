@@ -113,16 +113,28 @@ export default function ComparisonPage() {
     color: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
-  const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => string; className?: string | ((m: SummaryMetrics) => string) }[] = [
-    { key: 'totalReturn', label: 'Total Return', format: (m) => `${(m.totalReturn * 100).toFixed(2)}%`, className: (m: SummaryMetrics) => m.totalReturn >= 0 ? 'text-positive' : 'text-negative' },
-    { key: 'annualizedReturn', label: 'Annualized Return', format: (m) => `${(m.annualizedReturn * 100).toFixed(2)}%`, className: (m: SummaryMetrics) => m.annualizedReturn >= 0 ? 'text-positive' : 'text-negative' },
-    { key: 'annualizedVolatility', label: 'Annualized Volatility', format: (m) => `${(m.annualizedVolatility * 100).toFixed(2)}%` },
-    { key: 'sharpeRatio', label: 'Sharpe Ratio', format: (m) => m.sharpeRatio.toFixed(2) },
-    { key: 'maxDrawdown', label: 'Max Drawdown', format: (m) => `${(m.maxDrawdown * 100).toFixed(2)}%`, className: 'text-negative' },
-    { key: 'bestDay', label: 'Best Day', format: (m) => `+${(m.bestDay * 100).toFixed(2)}%`, className: 'text-positive' },
-    { key: 'worstDay', label: 'Worst Day', format: (m) => `${(m.worstDay * 100).toFixed(2)}%`, className: 'text-negative' },
-    { key: 'observations', label: 'Observations', format: (m) => m.numberOfObservations.toLocaleString(), className: 'text-muted-foreground' },
+const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => string; className?: string | ((m: SummaryMetrics) => string); higherIsBetter: boolean }[] = [
+    { key: 'totalReturn', label: 'Total Return', format: (m) => `${(m.totalReturn * 100).toFixed(2)}%`, className: (m: SummaryMetrics) => m.totalReturn >= 0 ? 'text-positive' : 'text-negative', higherIsBetter: true },
+    { key: 'annualizedReturn', label: 'Annualized Return', format: (m) => `${(m.annualizedReturn * 100).toFixed(2)}%`, className: (m: SummaryMetrics) => m.annualizedReturn >= 0 ? 'text-positive' : 'text-negative', higherIsBetter: true },
+    { key: 'annualizedVolatility', label: 'Annualized Volatility', format: (m) => `${(m.annualizedVolatility * 100).toFixed(2)}%`, higherIsBetter: false },
+    { key: 'sharpeRatio', label: 'Sharpe Ratio', format: (m) => m.sharpeRatio.toFixed(2), higherIsBetter: true },
+    { key: 'maxDrawdown', label: 'Max Drawdown', format: (m) => `${(m.maxDrawdown * 100).toFixed(2)}%`, className: 'text-negative', higherIsBetter: false },
+    { key: 'bestDay', label: 'Best Day', format: (m) => `+${(m.bestDay * 100).toFixed(2)}%`, className: 'text-positive', higherIsBetter: true },
+    { key: 'worstDay', label: 'Worst Day', format: (m) => `${(m.worstDay * 100).toFixed(2)}%`, className: 'text-negative', higherIsBetter: false },
+    { key: 'observations', label: 'Observations', format: (m) => m.numberOfObservations.toLocaleString(), className: 'text-muted-foreground', higherIsBetter: false },
   ];
+
+  const getBestIndex = (key: string, backtestsList: typeof selectedBacktests, row: typeof metricsRows[number]) => {
+    if (!row.higherIsBetter) return -1;
+    const values = backtestsList.map((bt) => {
+      const m = formatMetrics(bt.summaryMetrics);
+      if (!m) return null;
+      return m[key as keyof SummaryMetrics] as number;
+    }).filter((v): v is number => v !== null);
+    if (values.length === 0) return -1;
+    const best = Math.max(...values);
+    return values.indexOf(best);
+  };
 
   return (
     <div>
@@ -232,21 +244,26 @@ export default function ComparisonPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {metricsRows.map((row) => (
-                        <tr key={row.key} className="border-b border-border/40 last:border-0">
-                          <td className="py-2 text-[13px] font-medium">{row.label}</td>
-                          {selectedBacktests.map((bt) => {
+                      {metricsRows.map((row, rowIdx) => {
+                        const bestIdx = getBestIndex(row.key, selectedBacktests, row);
+                        return (
+                        <tr key={row.key} className={`border-b border-border/40 last:border-0 ${rowIdx % 2 === 1 ? 'bg-muted/10' : ''}`}>
+                          <td className="py-2 text-[13px] font-medium pr-6">{row.label}</td>
+                          {selectedBacktests.map((bt, colIdx) => {
                             const metrics = formatMetrics(bt.summaryMetrics);
-                            if (!metrics) return <td key={bt.id} className="py-2 text-right font-mono text-xs tabular-nums">-</td>;
+                            if (!metrics) return <td key={bt.id} className="py-2 text-right font-mono text-xs tabular-nums pl-4">-</td>;
                             const cellClass = typeof row.className === 'function' ? row.className(metrics) : (row.className || '');
+                            const isBest = colIdx === bestIdx;
                             return (
-                              <td key={bt.id} className={`py-2 text-right font-mono text-xs tabular-nums ${cellClass}`}>
+                              <td key={bt.id} className={`py-2 text-right font-mono text-xs tabular-nums pl-4 ${cellClass} ${isBest ? 'font-semibold' : ''}`}>
                                 {row.format(metrics)}
+                                {isBest && <span className="inline-block w-1 h-1 rounded-full bg-positive ml-1 align-middle" />}
                               </td>
                             );
                           })}
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
