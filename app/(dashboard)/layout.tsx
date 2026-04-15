@@ -106,7 +106,12 @@ export default function DashboardLayout({
                 </nav>
                 <div className="flex sm:hidden">
                   <select
-                    className="h-8 rounded-md border border-border bg-background px-2 text-[13px] text-foreground"
+                    className="h-8 rounded-md border border-border bg-background px-2 pr-7 text-[13px] text-foreground appearance-none"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.5rem center',
+                    }}
                     value={navigation.find(n => pathname === n.href || pathname.startsWith(n.href + '/'))?.href || ''}
                     onChange={(e) => { if (e.target.value) window.location.href = e.target.value; }}
                     aria-label="Navigate to"
