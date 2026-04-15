@@ -238,6 +238,7 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
                             className="table-header text-right py-2.5 pl-4 font-mono"
                             style={{ color: CHART_COLORS[index % CHART_COLORS.length] }}
                           >
+                            <span className="inline-block w-2 h-2 rounded-full mr-1.5 -mt-px align-middle" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
                             {bt.portfolio.name}
                           </th>
                         ))}

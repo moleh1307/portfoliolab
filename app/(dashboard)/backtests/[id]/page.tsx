@@ -180,53 +180,56 @@ if (isLoading) {
       </div>
 
       {metrics && (
-        <div className="space-y-3">
-          <div>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Returns</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <MetricTile
-                label="Total Return"
-                value={`${(metrics.totalReturn * 100).toFixed(2)}%`}
-                positive={metrics.totalReturn >= 0}
-                subtext={`${metrics.numberOfObservations.toLocaleString()} days`}
-              />
-              <MetricTile
-                label="Annualized Return"
-                value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
-                positive={metrics.annualizedReturn >= 0}
-              />
-              <MetricTile
-                label="Best Day"
-                value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
-                positive={true}
-              />
-              <MetricTile
-                label="Worst Day"
-                value={`${(metrics.worstDay * 100).toFixed(2)}%`}
-                positive={false}
-              />
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="space-y-4">
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Returns</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <MetricTile
+                  label="Total Return"
+                  value={`${(metrics.totalReturn * 100).toFixed(2)}%`}
+                  positive={metrics.totalReturn >= 0}
+                  subtext={`${metrics.numberOfObservations.toLocaleString()} days`}
+                />
+                <MetricTile
+                  label="Annualized Return"
+                  value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
+                  positive={metrics.annualizedReturn >= 0}
+                />
+                <MetricTile
+                  label="Best Day"
+                  value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
+                  positive={true}
+                />
+                <MetricTile
+                  label="Worst Day"
+                  value={`${(metrics.worstDay * 100).toFixed(2)}%`}
+                  positive={false}
+                />
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Risk</p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <MetricTile
-                label="Annualized Vol"
-                value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
-              />
-              <MetricTile
-                label="Sharpe Ratio"
-                value={metrics.sharpeRatio.toFixed(2)}
-              />
-              <MetricTile
-                label="Max Drawdown"
-                value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
-                positive={false}
-              />
-              <MetricTile
-                label="Observations"
-                value={metrics.numberOfObservations.toLocaleString()}
-              />
+            <div className="border-t border-border/60" />
+            <div>
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Risk</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <MetricTile
+                  label="Annualized Vol"
+                  value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
+                />
+                <MetricTile
+                  label="Sharpe Ratio"
+                  value={metrics.sharpeRatio.toFixed(2)}
+                />
+                <MetricTile
+                  label="Max Drawdown"
+                  value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
+                  positive={false}
+                />
+                <MetricTile
+                  label="Observations"
+                  value={metrics.numberOfObservations.toLocaleString()}
+                />
+              </div>
             </div>
           </div>
         </div>
