@@ -13,6 +13,7 @@ import { DrawdownChart } from '@/components/charts/drawdown-chart';
 import { MonthlyReturnsHeatmap } from '@/components/charts/monthly-returns-heatmap';
 import { RollingAnalysisChart } from '@/components/charts/rolling-analysis-chart';
 import { CorrelationMatrixHeatmap } from '@/components/charts/correlation-matrix';
+import { RiskDecompositionChart } from '@/components/charts/risk-decomposition';
 import { computeRollingMetrics, type RollingDataPoint } from '@/lib/analytics/engine';
 import { useToast } from '@/components/ui/toast';
 import { confirmDialog } from '@/components/ui/alert-dialog';
@@ -108,6 +109,14 @@ export default function BacktestDetailPage() {
   const { toast } = useToast();
   const [backtest, setBacktest] = useState<Backtest | null>(null);
   const [correlationMatrix, setCorrelationMatrix] = useState<{ symbols: string[]; matrix: number[][] } | null>(null);
+  const [riskDecomposition, setRiskDecomposition] = useState<{
+    symbols: string[];
+    weights: number[];
+    marginalRisk: number[];
+    componentRisk: number[];
+    pctContribution: number[];
+    portfolioVolatility: number;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAllReturns, setShowAllReturns] = useState(false);
@@ -121,6 +130,9 @@ export default function BacktestDetailPage() {
         setBacktest(data.backtest);
         if (data.correlationMatrix) {
           setCorrelationMatrix(data.correlationMatrix);
+        }
+        if (data.riskDecomposition) {
+          setRiskDecomposition(data.riskDecomposition);
         }
       } else if (response.status === 404) {
         setError('Backtest not found');
@@ -490,6 +502,17 @@ export default function BacktestDetailPage() {
           </CardHeader>
           <CardContent>
             <CorrelationMatrixHeatmap data={correlationMatrix} />
+          </CardContent>
+        </Card>
+      )}
+
+      {riskDecomposition && riskDecomposition.symbols.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Risk Decomposition</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RiskDecompositionChart data={riskDecomposition} />
           </CardContent>
         </Card>
       )}

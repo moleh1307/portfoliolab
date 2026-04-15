@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { DEFAULT_USER_ID } from '@/lib/constants';
-import { computeCorrelationMatrix, type PriceData } from '@/lib/analytics/engine';
+import { computeCorrelationMatrix, computeRiskDecomposition, type PriceData } from '@/lib/analytics/engine';
 
 async function ensureLocalUser() {
   const existing = await prisma.user.findUnique({
@@ -95,7 +95,14 @@ export async function GET(
       backtest.endDate.toISOString().split('T')[0]
     );
 
-    return NextResponse.json({ backtest, correlationMatrix });
+    const riskDecomposition = computeRiskDecomposition(
+      assetPrices,
+      backtest.portfolio.holdings.map(h => ({ assetId: h.assetId, weight: h.weight })),
+      backtest.startDate.toISOString().split('T')[0],
+      backtest.endDate.toISOString().split('T')[0]
+    );
+
+    return NextResponse.json({ backtest, correlationMatrix, riskDecomposition });
   } catch (error) {
     console.error('Error fetching backtest:', error);
     return NextResponse.json(

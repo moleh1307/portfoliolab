@@ -801,6 +801,90 @@ export function computeCorrelationMatrix(
   return { symbols, matrix };
 }
 
+export interface RiskDecomposition {
+  symbols: string[];
+  weights: number[];
+  marginalRisk: number[];
+  componentRisk: number[];
+  pctContribution: number[];
+  portfolioVolatility: number;
+}
+
+export function computeRiskDecomposition(
+  assetPrices: AssetPrices[],
+  holdings: PortfolioHolding[],
+  startDate: string,
+  endDate: string
+): RiskDecomposition | null {
+  const returnsMap = new Map<string, number[]>();
+  const alignedSymbols: string[] = [];
+  const alignedWeights: number[] = [];
+
+  for (const holding of holdings) {
+    const prices = assetPrices.find(ap => ap.assetId === holding.assetId);
+    if (!prices || prices.prices.length < 2) continue;
+
+    const filtered = prices.prices.filter(p => p.date >= startDate && p.date <= endDate);
+    if (filtered.length < 2) continue;
+
+    const returns: number[] = [];
+    for (let i = 1; i < filtered.length; i++) {
+      returns.push((filtered[i].close - filtered[i - 1].close) / filtered[i - 1].close);
+    }
+    returnsMap.set(prices.symbol, returns);
+    alignedSymbols.push(prices.symbol);
+    alignedWeights.push(holding.weight / 100);
+  }
+
+  if (alignedSymbols.length < 2) return null;
+
+  const n = alignedSymbols.length;
+  const minLen = Math.min(...alignedSymbols.map(s => returnsMap.get(s)!.length));
+
+  const returnsMatrix: number[][] = alignedSymbols.map(s => returnsMap.get(s)!.slice(0, minLen));
+
+  const covMatrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const meanI = computeMean(returnsMatrix[i]);
+      const meanJ = computeMean(returnsMatrix[j]);
+      let cov = 0;
+      for (let k = 0; k < minLen; k++) {
+        cov += (returnsMatrix[i][k] - meanI) * (returnsMatrix[j][k] - meanJ);
+      }
+      covMatrix[i][j] = (cov / (minLen - 1)) * 252;
+    }
+  }
+
+  const portVar = alignedWeights.reduce((sum, wi, i) =>
+    sum + alignedWeights.reduce((s2, wj, j) => s2 + wj * covMatrix[i][j], 0) * wi, 0
+  );
+  const portVol = Math.sqrt(Math.max(0, portVar));
+
+  const marginalRisk: number[] = alignedWeights.map((_, i) => {
+    let sum = 0;
+    for (let j = 0; j < n; j++) {
+      sum += alignedWeights[j] * covMatrix[i][j];
+    }
+    return portVol > 0 ? sum / portVol : 0;
+  });
+
+  const componentRisk = alignedWeights.map((w, i) => w * marginalRisk[i]);
+  const totalComponentRisk = componentRisk.reduce((a, b) => a + b, 0);
+  const pctContribution = totalComponentRisk > 0
+    ? componentRisk.map(c => c / totalComponentRisk)
+    : Array(n).fill(0);
+
+  return {
+    symbols: alignedSymbols,
+    weights: alignedWeights.map(w => w * 100),
+    marginalRisk,
+    componentRisk,
+    pctContribution,
+    portfolioVolatility: portVol,
+  };
+}
+
 export function computeRollingMetrics(
   dataPoints: DailyReturn[],
   window: number,
