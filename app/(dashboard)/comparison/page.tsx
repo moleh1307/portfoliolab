@@ -279,9 +279,12 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
 
         {selectedBacktests.length > 0 && selectedBacktests.length < 2 && (
           <div className="rounded-lg border border-dashed border-border py-12 text-center">
-            <p className="text-[13px] text-muted-foreground">
-              Select at least one more backtest to compare
-            </p>
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </div>
+            <p className="text-[13px] text-muted-foreground">Select one more backtest to start comparing.</p>
           </div>
         )}
 
