@@ -724,6 +724,83 @@ export interface RollingDataPoint {
   rollingBeta: number | null;
 }
 
+export interface CorrelationMatrix {
+  symbols: string[];
+  matrix: number[][];
+}
+
+export function computeCorrelationMatrix(
+  assetPrices: AssetPrices[],
+  startDate: string,
+  endDate: string
+): CorrelationMatrix {
+  const returnsMap = new Map<string, number[]>();
+  const dates: string[] = [];
+
+  for (const ap of assetPrices) {
+    const filtered = ap.prices.filter(p => p.date >= startDate && p.date <= endDate);
+    if (filtered.length < 2) continue;
+
+    const returns: number[] = [];
+    for (let i = 1; i < filtered.length; i++) {
+      const ret = (filtered[i].close - filtered[i - 1].close) / filtered[i - 1].close;
+      returns.push(ret);
+    }
+    returnsMap.set(ap.symbol, returns);
+
+    const assetDates = filtered.slice(1).map(p => p.date);
+    if (dates.length === 0) {
+      dates.push(...assetDates);
+    }
+  }
+
+  if (returnsMap.size === 0) {
+    return { symbols: [], matrix: [] };
+  }
+
+  const symbols = Array.from(returnsMap.keys());
+  const n = symbols.length;
+
+  const matrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) {
+        matrix[i][j] = 1;
+        continue;
+      }
+      if (j < i) {
+        matrix[i][j] = matrix[j][i];
+        continue;
+      }
+
+      const returnsA = returnsMap.get(symbols[i])!;
+      const returnsB = returnsMap.get(symbols[j])!;
+      const len = Math.min(returnsA.length, returnsB.length);
+      if (len < 2) continue;
+
+      const meanA = computeMean(returnsA.slice(0, len));
+      const meanB = computeMean(returnsB.slice(0, len));
+
+      let covar = 0;
+      let stdA = 0;
+      let stdB = 0;
+      for (let k = 0; k < len; k++) {
+        const diffA = returnsA[k] - meanA;
+        const diffB = returnsB[k] - meanB;
+        covar += diffA * diffB;
+        stdA += diffA * diffA;
+        stdB += diffB * diffB;
+      }
+
+      const denom = Math.sqrt(stdA * stdB);
+      matrix[i][j] = denom > 0 ? covar / denom : 0;
+    }
+  }
+
+  return { symbols, matrix };
+}
+
 export function computeRollingMetrics(
   dataPoints: DailyReturn[],
   window: number,

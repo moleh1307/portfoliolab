@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { DEFAULT_USER_ID } from '@/lib/constants';
+import { computeCorrelationMatrix, type PriceData } from '@/lib/analytics/engine';
 
 async function ensureLocalUser() {
   const existing = await prisma.user.findUnique({
@@ -60,7 +61,41 @@ export async function GET(
       return NextResponse.json({ error: 'Backtest not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ backtest });
+    const assetIds = backtest.portfolio.holdings.map((h) => h.assetId);
+    const priceRecords = await prisma.priceRecord.findMany({
+      where: {
+        assetId: { in: assetIds },
+        date: {
+          gte: backtest.startDate,
+          lte: backtest.endDate,
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    const priceMap = new Map<string, PriceData[]>();
+    for (const record of priceRecords) {
+      const existing = priceMap.get(record.assetId) || [];
+      existing.push({
+        date: record.date.toISOString().split('T')[0],
+        close: record.close,
+      });
+      priceMap.set(record.assetId, existing);
+    }
+
+    const assetPrices = backtest.portfolio.holdings.map((h) => ({
+      assetId: h.assetId,
+      symbol: h.asset.symbol,
+      prices: priceMap.get(h.assetId) || [],
+    }));
+
+    const correlationMatrix = computeCorrelationMatrix(
+      assetPrices,
+      backtest.startDate.toISOString().split('T')[0],
+      backtest.endDate.toISOString().split('T')[0]
+    );
+
+    return NextResponse.json({ backtest, correlationMatrix });
   } catch (error) {
     console.error('Error fetching backtest:', error);
     return NextResponse.json(

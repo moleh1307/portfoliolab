@@ -12,6 +12,7 @@ import { ComparisonChart } from '@/components/charts/comparison-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
 import { MonthlyReturnsHeatmap } from '@/components/charts/monthly-returns-heatmap';
 import { RollingAnalysisChart } from '@/components/charts/rolling-analysis-chart';
+import { CorrelationMatrixHeatmap } from '@/components/charts/correlation-matrix';
 import { computeRollingMetrics, type RollingDataPoint } from '@/lib/analytics/engine';
 import { useToast } from '@/components/ui/toast';
 import { confirmDialog } from '@/components/ui/alert-dialog';
@@ -106,6 +107,7 @@ export default function BacktestDetailPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [backtest, setBacktest] = useState<Backtest | null>(null);
+  const [correlationMatrix, setCorrelationMatrix] = useState<{ symbols: string[]; matrix: number[][] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAllReturns, setShowAllReturns] = useState(false);
@@ -117,6 +119,9 @@ export default function BacktestDetailPage() {
       if (response.ok) {
         const data = await response.json();
         setBacktest(data.backtest);
+        if (data.correlationMatrix) {
+          setCorrelationMatrix(data.correlationMatrix);
+        }
       } else if (response.status === 404) {
         setError('Backtest not found');
       }
@@ -474,6 +479,17 @@ export default function BacktestDetailPage() {
           </CardHeader>
           <CardContent>
             <RollingAnalysisChart data={rollingData} />
+          </CardContent>
+        </Card>
+      )}
+
+      {correlationMatrix && correlationMatrix.symbols.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Correlation Matrix</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CorrelationMatrixHeatmap data={correlationMatrix} />
           </CardContent>
         </Card>
       )}
