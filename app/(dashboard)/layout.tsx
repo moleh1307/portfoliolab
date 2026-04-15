@@ -65,16 +65,16 @@ export default function DashboardLayout({
   return (
     <ToastProvider>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
-        <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+        <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/50">
           <div className="mx-auto max-w-6xl px-5">
-            <div className="flex h-[52px] items-center justify-between">
-              <div className="flex items-center gap-8">
+            <div className="flex h-[56px] items-center justify-between">
+              <div className="flex items-center gap-10">
                 <Link
                   href="/datasets"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2.5"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-[3px] bg-zinc-900 dark:bg-zinc-100">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 dark:bg-zinc-100">
+                    <svg width="14" height="14" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M1 9L4 3L7 7L10 2" stroke="white" className="dark:stroke-zinc-900" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
@@ -82,7 +82,7 @@ export default function DashboardLayout({
                     PortfolioLab
                   </span>
                 </Link>
-                <nav className="hidden sm:flex items-center">
+                <nav className="hidden sm:flex items-center gap-1">
                   {navigation.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                     return (
@@ -90,16 +90,13 @@ export default function DashboardLayout({
                         key={item.name}
                         href={item.href}
                         className={cn(
-                          'relative px-3 py-[14px] text-[13px] font-medium transition-colors duration-150',
+                          'relative px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 rounded-md',
                           isActive
-                            ? 'text-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
+                            ? 'text-foreground bg-muted/60'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                         )}
                       >
                         {item.name}
-                        {isActive && (
-                          <span className="absolute bottom-0 inset-x-3 h-[1.5px] bg-foreground rounded-full" />
-                        )}
                       </Link>
                     );
                   })}
