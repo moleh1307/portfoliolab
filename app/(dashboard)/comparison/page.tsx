@@ -56,11 +56,17 @@ export default function ComparisonPage() {
     fetchBacktests();
   }, [fetchBacktests]);
 
+  const maxSelections = 5;
+
   const toggleBacktest = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((i) => i !== id);
+      if (prev.length >= maxSelections) return prev;
+      return [...prev, id];
+    });
   };
+
+  const clearSelections = () => setSelectedIds([]);
 
   const formatMetrics = (metricsJson: string | null): SummaryMetrics | null => {
     if (!metricsJson) return null;
@@ -142,27 +148,52 @@ export default function ComparisonPage() {
                 <Skeleton className="h-7 w-20 rounded-md" />
               </div>
             ) : backtests.length === 0 ? (
-              <p className="text-[13px] text-muted-foreground">
-                No backtests available. Run some backtests first.
-              </p>
+              <div className="rounded-lg border border-dashed border-border py-12 text-center">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                    <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+                  </svg>
+                </div>
+                <p className="text-[13px] text-muted-foreground">No backtests available. Run some backtests first.</p>
+              </div>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {backtests.map((backtest) => {
-                  const isSelected = selectedIds.includes(backtest.id);
-                  return (
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {backtests.map((backtest) => {
+                    const isSelected = selectedIds.includes(backtest.id);
+                    const isDisabled = !isSelected && selectedIds.length >= maxSelections;
+                    return (
+                      <button
+                        key={backtest.id}
+                        onClick={() => toggleBacktest(backtest.id)}
+                        disabled={isDisabled}
+                        aria-pressed={isSelected}
+                        className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition-all duration-150 border ${
+                          isSelected
+                            ? 'bg-foreground text-background border-foreground'
+                            : isDisabled
+                            ? 'bg-muted/50 text-muted-foreground/40 border-border cursor-not-allowed'
+                            : 'bg-transparent text-foreground border-border hover:bg-muted'
+                        }`}
+                      >
+                        {backtest.portfolio.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">
+                    {selectedIds.length > 0 ? `${selectedIds.length} of ${maxSelections} selected` : `Select up to ${maxSelections}`}
+                  </span>
+                  {selectedIds.length > 0 && (
                     <button
-                      key={backtest.id}
-                      onClick={() => toggleBacktest(backtest.id)}
-                      className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition-all duration-150 border ${
-                        isSelected
-                          ? 'bg-foreground text-background border-foreground'
-                          : 'bg-transparent text-foreground border-border hover:bg-muted'
-                      }`}
+                      onClick={clearSelections}
+                      className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {backtest.portfolio.name}
+                      Clear all
                     </button>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
@@ -225,10 +256,21 @@ export default function ComparisonPage() {
         )}
 
         {selectedBacktests.length > 0 && selectedBacktests.length < 2 && (
-          <div className="rounded-lg border border-dashed border-border py-16 text-center">
+          <div className="rounded-lg border border-dashed border-border py-12 text-center">
             <p className="text-[13px] text-muted-foreground">
-              Select at least 2 backtests to compare
+              Select at least one more backtest to compare
             </p>
+          </div>
+        )}
+
+        {selectedIds.length === 0 && backtests.length > 0 && (
+          <div className="rounded-lg border border-dashed border-border py-12 text-center">
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </div>
+            <p className="text-[13px] text-muted-foreground">Select backtests above to begin comparing performance.</p>
           </div>
         )}
       </div>

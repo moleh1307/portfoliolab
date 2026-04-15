@@ -293,7 +293,20 @@ export default function BacktestsPage() {
                     onClick={() => router.push(`/backtests/${backtest.id}`)}
                   >
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-[13px] font-medium">{backtest.portfolio.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[13px] font-medium">{backtest.portfolio.name}</h3>
+                        <span
+                          className={`status-dot ${
+                            backtest.status === 'completed'
+                              ? 'status-dot-completed'
+                              : backtest.status === 'partial'
+                              ? 'status-dot-partial'
+                              : 'status-dot-pending'
+                          }`}
+                          aria-label={`Status: ${backtest.status}`}
+                          title={backtest.status}
+                        />
+                      </div>
                       <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
                         <span className="font-mono tabular-nums">
                           {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}

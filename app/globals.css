@@ -94,7 +94,7 @@
 
 @layer components {
   .page-header {
-    @apply flex items-start justify-between gap-4;
+    @apply flex items-start justify-between gap-4 flex-col sm:flex-row;
   }
 
   .page-title {
@@ -138,14 +138,54 @@
   }
 }
 
+@layer components {
+  .list-item {
+    @apply rounded-lg border border-border bg-card px-4 py-3.5 transition-colors hover:bg-muted/30;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  .animate-page-in {
+    animation: fade-in 0.25s ease-out both;
+  }
+
+  .stagger-1 { animation-delay: 0.04s; }
+  .stagger-2 { animation-delay: 0.08s; }
+  .stagger-3 { animation-delay: 0.12s; }
+  .stagger-4 { animation-delay: 0.16s; }
+  .stagger-5 { animation-delay: 0.20s; }
+  .stagger-6 { animation-delay: 0.24s; }
+  .stagger-7 { animation-delay: 0.28s; }
+  .stagger-8 { animation-delay: 0.32s; }
 }
 
 ::selection {
-  background-color: hsl(var(--foreground) / 0.08);
+  background-color: hsl(var(--foreground) / 0.12);
+}
+
+:focus-visible {
+  outline: 2px solid hsl(var(--ring) / 0.5);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: light dark;
+  }
 }
 
 ::-webkit-scrollbar {

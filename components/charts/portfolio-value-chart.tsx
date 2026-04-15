@@ -39,11 +39,13 @@ export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
             backgroundColor: 'hsl(var(--card))',
             border: '1px solid hsl(var(--border))',
             borderRadius: '6px',
-            boxShadow: '0 2px 8px rgb(0 0 0 / 0.06)',
+            boxShadow: '0 4px 12px rgb(0 0 0 / 0.08)',
             fontSize: '12px',
             fontFamily: "'IBM Plex Mono', monospace",
+            padding: '10px 12px',
           }}
-          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 500, fontFamily: 'Inter, sans-serif', fontSize: '11px' }}
+          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 600, fontFamily: 'Inter, sans-serif', fontSize: '11px', letterSpacing: '0.02em' }}
+          cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1 }}
           labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           formatter={(value: number) => [`$${value.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, 'Value']}
         />

@@ -54,13 +54,14 @@ interface SummaryMetrics {
   numberOfObservations: number;
 }
 
-function MetricTile({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
+function MetricTile({ label, value, positive, subtext }: { label: string; value: string; positive?: boolean; subtext?: string }) {
   return (
     <div className="rounded-lg border border-border bg-card px-4 py-3">
       <p className="metric-label mb-1.5">{label}</p>
       <p className={`metric-value ${positive !== undefined ? (positive ? 'text-positive' : 'text-negative') : ''}`}>
         {value}
       </p>
+      {subtext && <p className="text-[10px] text-muted-foreground mt-1 font-mono tabular-nums">{subtext}</p>}
     </div>
   );
 }
@@ -71,6 +72,7 @@ export default function BacktestDetailPage() {
   const [backtest, setBacktest] = useState<Backtest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAllReturns, setShowAllReturns] = useState(false);
 
   const fetchBacktest = useCallback(async () => {
     try {
@@ -150,44 +152,55 @@ if (error || !backtest) {
       </div>
 
       {metrics && (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <MetricTile
-            label="Total Return"
-            value={`${(metrics.totalReturn * 100).toFixed(2)}%`}
-            positive={metrics.totalReturn >= 0}
-          />
-          <MetricTile
-            label="Annualized Return"
-            value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
-            positive={metrics.annualizedReturn >= 0}
-          />
-          <MetricTile
-            label="Annualized Vol"
-            value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
-          />
-          <MetricTile
-            label="Sharpe Ratio"
-            value={metrics.sharpeRatio.toFixed(2)}
-          />
-          <MetricTile
-            label="Max Drawdown"
-            value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
-            positive={false}
-          />
-          <MetricTile
-            label="Best Day"
-            value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
-            positive={true}
-          />
-          <MetricTile
-            label="Worst Day"
-            value={`${(metrics.worstDay * 100).toFixed(2)}%`}
-            positive={false}
-          />
-          <MetricTile
-            label="Observations"
-            value={metrics.numberOfObservations.toLocaleString()}
-          />
+        <div className="space-y-3">
+          <div>
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Returns</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <MetricTile
+                label="Total Return"
+                value={`${(metrics.totalReturn * 100).toFixed(2)}%`}
+                positive={metrics.totalReturn >= 0}
+                subtext={`${metrics.numberOfObservations.toLocaleString()} days`}
+              />
+              <MetricTile
+                label="Annualized Return"
+                value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
+                positive={metrics.annualizedReturn >= 0}
+              />
+              <MetricTile
+                label="Best Day"
+                value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
+                positive={true}
+              />
+              <MetricTile
+                label="Worst Day"
+                value={`${(metrics.worstDay * 100).toFixed(2)}%`}
+                positive={false}
+              />
+            </div>
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">Risk</p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <MetricTile
+                label="Annualized Vol"
+                value={`${(metrics.annualizedVolatility * 100).toFixed(2)}%`}
+              />
+              <MetricTile
+                label="Sharpe Ratio"
+                value={metrics.sharpeRatio.toFixed(2)}
+              />
+              <MetricTile
+                label="Max Drawdown"
+                value={`${(metrics.maxDrawdown * 100).toFixed(2)}%`}
+                positive={false}
+              />
+              <MetricTile
+                label="Observations"
+                value={metrics.numberOfObservations.toLocaleString()}
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -222,7 +235,28 @@ if (error || !backtest) {
         <CardHeader>
           <CardTitle>Asset Allocation</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
+            {backtest.portfolio.holdings.map((holding, i) => {
+              const colors = [
+                'hsl(var(--chart-1))',
+                'hsl(var(--chart-2))',
+                'hsl(var(--chart-4))',
+                'hsl(var(--chart-5))',
+                'hsl(var(--muted-foreground))',
+              ];
+              return (
+                <div
+                  key={holding.assetId}
+                  className="h-full transition-all"
+                  style={{
+                    width: `${holding.weight}%`,
+                    backgroundColor: colors[i % colors.length],
+                  }}
+                />
+              );
+            })}
+          </div>
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
@@ -250,8 +284,16 @@ if (error || !backtest) {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex-row items-center justify-between">
           <CardTitle>Daily Returns</CardTitle>
+          {backtest.dataPoints.length > 30 && (
+            <button
+              onClick={() => setShowAllReturns(!showAllReturns)}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+              {showAllReturns ? 'Show recent' : `Show all (${backtest.dataPoints.length})`}
+            </button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -265,7 +307,7 @@ if (error || !backtest) {
                 </tr>
               </thead>
               <tbody>
-                {backtest.dataPoints.slice(-30).map((dp) => (
+                {(showAllReturns ? backtest.dataPoints : backtest.dataPoints.slice(-30)).map((dp) => (
                   <tr key={dp.id} className="border-b border-border/40 last:border-0">
                     <td className="py-2 font-mono text-xs tabular-nums">{new Date(dp.date).toLocaleDateString()}</td>
                     <td className="py-2 text-right font-mono text-xs tabular-nums">
@@ -282,6 +324,11 @@ if (error || !backtest) {
               </tbody>
             </table>
           </div>
+          {!showAllReturns && backtest.dataPoints.length > 30 && (
+            <p className="text-[11px] text-muted-foreground mt-2 text-center">
+              Showing 30 most recent of {backtest.dataPoints.length} days
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
