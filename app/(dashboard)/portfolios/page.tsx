@@ -230,7 +230,7 @@ export default function PortfoliosPage() {
 
                 <div className="space-y-2">
                   <Label>Holdings</Label>
-                  <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-2.5">
+                  <div className="rounded-xl border border-border/50 bg-muted/20 p-3 space-y-2.5">
                     {holdings.map((holding) => {
                       const asset = assets.find((a) => a.id === holding.assetId);
                       return (
@@ -350,7 +350,7 @@ export default function PortfoliosPage() {
               <Skeleton className="h-16 w-full" />
             </div>
           ) : portfolios.length === 0 && !showForm ? (
-            <div className="rounded-lg border border-dashed border-border py-16 text-center">
+            <div className="rounded-lg border border-dashed border-border py-20 text-center">
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
                   <rect x="3" y="3" width="7" height="7" />
@@ -366,7 +366,7 @@ export default function PortfoliosPage() {
               {portfolios.map((portfolio) => (
                 <div
                   key={portfolio.id}
-                  className="group flex items-start justify-between rounded-xl border border-border/60 bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle"
+                  className="group flex items-start justify-between rounded-xl border border-border/50 bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle"
                 >
                   <div className="min-w-0 flex-1">
                     <h3 className="text-[13px] font-medium">{portfolio.name}</h3>

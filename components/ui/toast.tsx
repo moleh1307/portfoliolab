@@ -47,7 +47,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 text-[13px] shadow-elevated ${
+            className={`flex items-center gap-2.5 rounded-xl border border-border/50 px-4 py-3 text-[13px] shadow-elevated backdrop-blur-sm ${
               t.exiting
                 ? 'animate-toast-out'
                 : 'animate-fade-in'

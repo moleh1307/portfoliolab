@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { ChartTooltip } from '@/components/ui/chart-tooltip';
 
 interface DrawdownChartProps {
   data: { date: string; drawdown: number }[];
@@ -15,12 +16,12 @@ interface DrawdownChartProps {
 
 export function DrawdownChart({ data }: DrawdownChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ResponsiveContainer width="100%" height={300}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
         <defs>
           <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.08} />
-            <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.01} />
+            <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.1} />
+            <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.02} />
           </linearGradient>
         </defs>
         <XAxis
@@ -38,22 +39,11 @@ export function DrawdownChart({ data }: DrawdownChartProps) {
           tickLine={false}
           tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-          width={48}
+          width={52}
         />
         <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgb(0 0 0 / 0.08)',
-            fontSize: '12px',
-            fontFamily: "'IBM Plex Mono', monospace",
-            padding: '10px 14px',
-          }}
-          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 600, fontFamily: 'Inter, sans-serif', fontSize: '11px', letterSpacing: '0.02em' }}
+          content={<ChartTooltip valueFormatter={(v) => `${(v * 100).toFixed(2)}%`} />}
           cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1, strokeDasharray: '4 4' }}
-          labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-          formatter={(value: number) => [`${(value * 100).toFixed(2)}%`, 'Drawdown']}
         />
         <Area
           type="monotone"
@@ -61,6 +51,7 @@ export function DrawdownChart({ data }: DrawdownChartProps) {
           stroke="hsl(var(--chart-3))"
           strokeWidth={1.5}
           fill="url(#drawdownGradient)"
+          animationDuration={1200}
         />
       </AreaChart>
     </ResponsiveContainer>

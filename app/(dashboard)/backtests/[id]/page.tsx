@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricGridSkeleton, Skeleton } from '@/components/ui/skeleton';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { PortfolioValueChart } from '@/components/charts/portfolio-value-chart';
 import { CumulativeReturnChart } from '@/components/charts/cumulative-return-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
@@ -58,14 +59,14 @@ interface SummaryMetrics {
 
 function MetricTile({ label, value, positive, subtext }: { label: string; value: string; positive?: boolean; subtext?: string }) {
   return (
-    <div className="px-4 py-3">
-      <p className="metric-label mb-1.5">{label}</p>
-      <p className={`text-lg font-semibold font-mono tracking-tight tabular-nums leading-none ${
+    <div className="px-5 py-4">
+      <p className="metric-label mb-2">{label}</p>
+      <p className={`text-[20px] font-semibold font-mono tracking-tight tabular-nums leading-none ${
         positive !== undefined ? (positive ? 'text-positive' : 'text-negative') : ''
       }`}>
         {value}
       </p>
-      {subtext && <p className="text-[10px] text-muted-foreground/70 mt-1 font-mono tabular-nums">{subtext}</p>}
+      {subtext && <p className="text-[10px] text-muted-foreground/60 mt-1.5 font-mono tabular-nums">{subtext}</p>}
     </div>
   );
 }
@@ -132,9 +133,9 @@ export default function BacktestDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-32 w-full rounded-xl" />
+        <Skeleton className="h-44 w-full rounded-2xl" />
         <MetricGridSkeleton />
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-72 w-full rounded-2xl" />
       </div>
     );
   }
@@ -148,7 +149,7 @@ export default function BacktestDetailPage() {
           </svg>
           Back
         </Button>
-        <div className="rounded-xl border border-dashed border-border py-16 text-center">
+        <div className="rounded-2xl border border-dashed border-border py-20 text-center">
           <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
               <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
@@ -167,6 +168,9 @@ export default function BacktestDetailPage() {
     cumulativeReturn: (dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital,
     drawdown: dp.drawdown,
   }));
+
+  const totalReturnPct = metrics ? metrics.totalReturn * 100 : 0;
+  const isPositive = totalReturnPct >= 0;
 
   return (
     <div className="space-y-6">
@@ -190,28 +194,37 @@ export default function BacktestDetailPage() {
 
       {metrics && (
         <div className="hero-metric shadow-hero animate-fade-in-up">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between relative">
             <div>
               <p className="hero-metric-label">Total Return</p>
-              <p className="hero-metric-value">
-                {(metrics.totalReturn * 100).toFixed(2)}%
+              <p className={`hero-metric-value ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                <AnimatedNumber
+                  value={totalReturnPct}
+                  decimals={2}
+                  suffix="%"
+                  duration={1000}
+                />
               </p>
               <p className="hero-metric-sub">
                 {metrics.numberOfObservations.toLocaleString()} trading days &middot; {(metrics.annualizedReturn * 100).toFixed(2)}% annualized
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 relative">
               <span
-                className={`status-dot ${
+                className={`status-badge ${
                   backtest.status === 'completed'
-                    ? 'status-dot-completed'
+                    ? 'status-badge-completed'
                     : backtest.status === 'partial'
-                    ? 'status-dot-partial'
-                    : 'status-dot-pending'
+                    ? 'status-badge-running'
+                    : 'status-badge-pending'
                 }`}
-                aria-label={`Status: ${backtest.status}`}
-                title={backtest.status}
-              />
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  backtest.status === 'completed' ? 'bg-positive' :
+                  backtest.status === 'partial' ? 'bg-amber-500' : 'bg-muted-foreground'
+                }`} />
+                {backtest.status === 'completed' ? 'Completed' : backtest.status === 'partial' ? 'Partial' : 'Pending'}
+              </span>
             </div>
           </div>
         </div>
@@ -220,19 +233,19 @@ export default function BacktestDetailPage() {
       <div className="flex items-center gap-2 -mt-1">
         <h1 className="page-title">{backtest.portfolio.name}</h1>
       </div>
-      <div className="flex items-center gap-2 text-[12px] text-muted-foreground -mt-1">
+      <div className="flex items-center gap-2 text-[12px] text-muted-foreground/70 -mt-1">
         <span className="font-mono tabular-nums">
           {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
         </span>
-        <span className="text-border/60">&middot;</span>
+        <span className="text-border/40">&middot;</span>
         <span>{backtest.rebalanceFrequency === 'none' ? 'No rebalancing' : `${backtest.rebalanceFrequency} rebalancing`}</span>
-        <span className="text-border/60">&middot;</span>
+        <span className="text-border/40">&middot;</span>
         <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()} initial</span>
       </div>
 
       {metrics && (
-        <div className="rounded-xl border border-border/60 bg-card overflow-hidden">
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/60">
+        <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/40">
             <MetricTile
               label="Ann. Return"
               value={`${(metrics.annualizedReturn * 100).toFixed(2)}%`}
@@ -252,8 +265,8 @@ export default function BacktestDetailPage() {
               positive={false}
             />
           </div>
-          <div className="border-t border-border/60" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/60">
+          <div className="border-t border-border/40" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/40">
             <MetricTile
               label="Best Day"
               value={`+${(metrics.bestDay * 100).toFixed(2)}%`}
@@ -333,14 +346,14 @@ export default function BacktestDetailPage() {
           </div>
           <table className="w-full">
             <thead>
-              <tr className="border-b border-border/60">
+              <tr className="border-b border-border/50">
                 <th className="table-header text-left py-2">Symbol</th>
                 <th className="table-header text-right py-2">Weight</th>
               </tr>
             </thead>
             <tbody>
               {backtest.portfolio.holdings.map((holding) => (
-                <tr key={holding.assetId} className="border-b border-border/30 last:border-0 transition-colors hover:bg-muted/20">
+                <tr key={holding.assetId} className="border-b border-border/20 last:border-0 transition-colors hover:bg-muted/20">
                   <td className="py-2.5">
                     <span className="font-mono font-medium text-[13px]">{holding.asset.symbol}</span>
                     {holding.asset.displayName && (
@@ -373,7 +386,7 @@ export default function BacktestDetailPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-border/60">
+                <tr className="border-b border-border/50">
                   <th className="table-header text-left py-2">Date</th>
                   <th className="table-header text-right py-2">Value</th>
                   <th className="table-header text-right py-2">Return</th>
@@ -382,7 +395,7 @@ export default function BacktestDetailPage() {
               </thead>
               <tbody>
                 {(showAllReturns ? backtest.dataPoints : backtest.dataPoints.slice(-30)).map((dp) => (
-                  <tr key={dp.id} className="border-b border-border/30 last:border-0 transition-colors hover:bg-muted/20">
+                  <tr key={dp.id} className="border-b border-border/20 last:border-0 transition-colors hover:bg-muted/20">
                     <td className="py-2 font-mono text-xs tabular-nums">{new Date(dp.date).toLocaleDateString()}</td>
                     <td className="py-2 text-right font-mono text-xs tabular-nums">
                       ${dp.portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}

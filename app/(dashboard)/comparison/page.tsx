@@ -252,7 +252,7 @@ const metricsRows: { key: string; label: string; format: (m: SummaryMetrics) => 
                       {metricsRows.map((row, rowIdx) => {
                         const bestIdx = getBestIndex(row.key, selectedBacktests, row);
                         return (
-                        <tr key={row.key} className={`border-b border-border/40 last:border-0 ${rowIdx % 2 === 1 ? 'bg-muted/10' : ''}`}>
+                        <tr key={row.key} className={`border-b border-border/20 last:border-0 ${rowIdx % 2 === 1 ? 'bg-muted/10' : ''}`}>
                           <td className="py-2 text-[13px] font-medium pr-6">{row.label}</td>
                           {selectedBacktests.map((bt, colIdx) => {
                             const metrics = formatMetrics(bt.summaryMetrics);

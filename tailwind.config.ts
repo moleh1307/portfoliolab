@@ -50,6 +50,7 @@ const config: Config = {
         md: 'calc(var(--radius) - 1px)',
         sm: 'calc(var(--radius) - 2px)',
         xl: 'calc(var(--radius) + 2px)',
+        '2xl': 'calc(var(--radius) + 4px)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -88,18 +89,13 @@ const config: Config = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
-        'draw-line': {
-          '0%': { pathLength: '0' },
-          '100%': { pathLength: '1' },
-        },
       },
       animation: {
-        'fade-in': 'fade-in 0.35s ease-out',
-        'fade-in-up': 'fade-in-up 0.45s ease-out',
+        'fade-in': 'fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        'fade-in-up': 'fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
         'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
         'toast-out': 'toast-out 0.2s ease-in forwards',
         'shimmer': 'shimmer 2s ease-in-out infinite',
-        'draw-line': 'draw-line 1.2s ease-out forwards',
       },
     },
   },

@@ -39,7 +39,7 @@ function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+      className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {dark ? (
@@ -65,9 +65,9 @@ export default function DashboardLayout({
   return (
     <ToastProvider>
       <div className="flex min-h-screen flex-col bg-background text-foreground">
-        <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/50">
+        <header className="sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/40">
           <div className="mx-auto max-w-6xl px-5">
-            <div className="flex h-[56px] items-center justify-between">
+            <div className="flex h-[60px] items-center justify-between">
               <div className="flex items-center gap-10">
                 <Link
                   href="/datasets"
@@ -90,7 +90,7 @@ export default function DashboardLayout({
                         key={item.name}
                         href={item.href}
                         className={cn(
-                          'relative px-3 py-1.5 text-[13px] font-medium transition-colors duration-150 rounded-md',
+                          'relative px-3 py-1.5 text-[13px] font-medium transition-all duration-200 rounded-lg',
                           isActive
                             ? 'text-foreground bg-muted/60'
                             : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
@@ -103,7 +103,7 @@ export default function DashboardLayout({
                 </nav>
                 <div className="flex sm:hidden">
                   <select
-                    className="h-8 rounded-md border border-border bg-background px-2 pr-7 text-[13px] text-foreground appearance-none"
+                    className="h-8 rounded-lg border border-border/60 bg-background px-2 pr-7 text-[13px] text-foreground appearance-none"
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
                       backgroundRepeat: 'no-repeat',
@@ -124,11 +124,11 @@ export default function DashboardLayout({
           </div>
         </header>
         <main id="main-content" className="flex-1">
-          <div key={pathname} className="mx-auto max-w-6xl px-5 py-8 animate-page-in">{children}</div>
+          <div key={pathname} className="mx-auto max-w-6xl px-5 py-10 animate-page-in">{children}</div>
         </main>
-        <footer className="border-t border-border">
+        <footer className="border-t border-border/40">
           <div className="mx-auto max-w-6xl px-5 py-4">
-            <p className="text-[11px] text-muted-foreground/60 text-center">
+            <p className="text-[11px] text-muted-foreground/50 text-center">
               PortfolioLab &mdash; Portfolio backtesting and analytics
             </p>
           </div>

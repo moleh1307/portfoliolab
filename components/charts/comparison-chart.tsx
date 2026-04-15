@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { ChartTooltip } from '@/components/ui/chart-tooltip';
 
 interface ComparisonDataPoint {
   date: string;
@@ -22,7 +23,7 @@ interface ComparisonChartProps {
 
 export function ComparisonChart({ data, lines }: ComparisonChartProps) {
   return (
-    <ResponsiveContainer width="100%" height={320}>
+    <ResponsiveContainer width="100%" height={340}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
         <XAxis
           dataKey="date"
@@ -39,22 +40,11 @@ export function ComparisonChart({ data, lines }: ComparisonChartProps) {
           tickLine={false}
           tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))', fontFamily: "'IBM Plex Mono', monospace" }}
           tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-          width={48}
+          width={52}
         />
         <Tooltip
-          contentStyle={{
-            backgroundColor: 'hsl(var(--card))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
-            boxShadow: '0 8px 24px rgb(0 0 0 / 0.08)',
-            fontSize: '12px',
-            fontFamily: "'IBM Plex Mono', monospace",
-            padding: '10px 14px',
-          }}
-          labelStyle={{ color: 'hsl(var(--foreground))', marginBottom: '4px', fontWeight: 600, fontFamily: 'Inter, sans-serif', fontSize: '11px', letterSpacing: '0.02em' }}
+          content={<ChartTooltip />}
           cursor={{ stroke: 'hsl(var(--border))', strokeWidth: 1, strokeDasharray: '4 4' }}
-          labelFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-          formatter={(value: number, name: string) => [`${(value * 100).toFixed(2)}%`, name]}
         />
         <Legend
           wrapperStyle={{
@@ -72,7 +62,7 @@ export function ComparisonChart({ data, lines }: ComparisonChartProps) {
             );
           }}
         />
-        {lines.map((line) => (
+        {lines.map((line, i) => (
           <Line
             key={line.key}
             type="monotone"
@@ -81,7 +71,9 @@ export function ComparisonChart({ data, lines }: ComparisonChartProps) {
             stroke={line.color}
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+            activeDot={{ r: 5, strokeWidth: 3, stroke: 'hsl(var(--card))' }}
+            animationDuration={1200}
+            animationBegin={i * 150}
           />
         ))}
       </LineChart>

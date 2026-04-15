@@ -152,7 +152,7 @@ export default function BacktestsPage() {
 
   return (
     <div>
-      <div className="page-header mb-8">
+      <div className="page-header mb-10">
         <div>
           <h1 className="page-title">Backtests</h1>
           <p className="page-description">
@@ -164,7 +164,7 @@ export default function BacktestsPage() {
         )}
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-10">
         {showForm && (
           <Card className="animate-fade-in">
             <CardHeader>
@@ -200,7 +200,7 @@ export default function BacktestsPage() {
                       required
                       disabled={isRunning}
                     />
-                    <p className="text-[11px] text-muted-foreground/70">Earliest available date from your dataset</p>
+                    <p className="text-[11px] text-muted-foreground/60">Earliest available date from your dataset</p>
                   </div>
 
                   <div className="space-y-1.5">
@@ -213,7 +213,7 @@ export default function BacktestsPage() {
                       required
                       disabled={isRunning}
                     />
-                    <p className="text-[11px] text-muted-foreground/70">Latest available date from your dataset</p>
+                    <p className="text-[11px] text-muted-foreground/60">Latest available date from your dataset</p>
                   </div>
                 </div>
 
@@ -249,7 +249,7 @@ export default function BacktestsPage() {
                 </div>
 
                 {formError && (
-                  <div className="rounded-md bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
+                  <div className="rounded-xl bg-negative/5 border border-negative/15 px-3 py-2.5 text-[13px] text-negative">
                     {formError}
                   </div>
                 )}
@@ -268,14 +268,14 @@ export default function BacktestsPage() {
         )}
 
         <div>
-          <h2 className="section-title mb-3">History{backtests.length > 0 && <span className="text-muted-foreground font-normal ml-1.5">({backtests.length})</span>}</h2>
+          <h2 className="section-title mb-4">History{backtests.length > 0 && <span className="text-muted-foreground/50 font-normal ml-1.5">({backtests.length})</span>}</h2>
           {isLoading ? (
             <div className="space-y-2">
-              <Skeleton className="h-16 w-full rounded-lg" />
-              <Skeleton className="h-16 w-full rounded-lg" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
             </div>
           ) : backtests.length === 0 && !showForm ? (
-            <div className="rounded-xl border border-dashed border-border py-16 text-center">
+            <div className="rounded-2xl border border-dashed border-border py-20 text-center">
               <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -290,31 +290,35 @@ export default function BacktestsPage() {
                 return (
                   <button
                     key={backtest.id}
-                    className="group flex items-start justify-between w-full rounded-xl border border-border/60 bg-card px-4 py-3.5 transition-all hover:bg-muted/30 hover:shadow-subtle text-left"
+                    className="group flex items-start justify-between w-full rounded-xl border border-border/50 bg-card px-5 py-4 transition-all duration-200 hover:bg-muted/20 hover:shadow-subtle hover:-translate-y-[1px] text-left"
                     onClick={() => router.push(`/backtests/${backtest.id}`)}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <h3 className="text-[13px] font-medium">{backtest.portfolio.name}</h3>
                         <span
-                          className={`status-dot ${
+                          className={`status-badge ${
                             backtest.status === 'completed'
-                              ? 'status-dot-completed'
+                              ? 'status-badge-completed'
                               : backtest.status === 'partial'
-                              ? 'status-dot-partial'
-                              : 'status-dot-pending'
+                              ? 'status-badge-running'
+                              : 'status-badge-pending'
                           }`}
-                          aria-label={`Status: ${backtest.status}`}
-                          title={backtest.status}
-                        />
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            backtest.status === 'completed' ? 'bg-positive' :
+                            backtest.status === 'partial' ? 'bg-amber-500' : 'bg-muted-foreground'
+                          }`} />
+                          {backtest.status === 'completed' ? 'Completed' : backtest.status === 'partial' ? 'Partial' : 'Pending'}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground/70">
                         <span className="font-mono tabular-nums">
                           {new Date(backtest.startDate).toLocaleDateString()} &ndash; {new Date(backtest.endDate).toLocaleDateString()}
                         </span>
-                        <span className="text-border/60">&middot;</span>
+                        <span className="text-border/40">&middot;</span>
                         <span>{backtest.rebalanceFrequency === 'none' ? 'No rebalance' : backtest.rebalanceFrequency}</span>
-                        <span className="text-border/60">&middot;</span>
+                        <span className="text-border/40">&middot;</span>
                         <span className="font-mono tabular-nums">${backtest.initialCapital.toLocaleString()}</span>
                       </div>
                       {metrics && (
@@ -322,7 +326,7 @@ export default function BacktestsPage() {
                           <span className={metrics.totalReturn >= 0 ? 'text-positive' : 'text-negative'}>
                             {(metrics.totalReturn * 100).toFixed(2)}%
                           </span>
-                          <span className="text-muted-foreground">
+                          <span className="text-muted-foreground/60">
                             Sharpe {metrics.sharpeRatio.toFixed(2)}
                           </span>
                           <span className="text-negative">
@@ -331,7 +335,7 @@ export default function BacktestsPage() {
                         </div>
                       )}
                     </div>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/40 shrink-0 mt-0.5 transition-colors group-hover:text-muted-foreground">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground/30 shrink-0 mt-0.5 transition-all duration-200 group-hover:text-muted-foreground group-hover:translate-x-0.5">
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
                   </button>
