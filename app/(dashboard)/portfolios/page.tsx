@@ -399,15 +399,25 @@ export default function PortfoliosPage() {
                       </div>
                     )}
                     <div className="flex flex-wrap gap-1 mt-1.5">
-                      {portfolio.holdings.map((h) => (
-                        <span
-                          key={h.assetId}
-                          className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono"
-                        >
-                          <span className="font-medium">{h.asset?.symbol}</span>
-                          <span className="text-muted-foreground">{h.weight}%</span>
-                        </span>
-                      ))}
+                      {portfolio.holdings.map((h, i) => {
+                        const colors = [
+                          'hsl(var(--chart-1))',
+                          'hsl(var(--chart-2))',
+                          'hsl(var(--chart-4))',
+                          'hsl(var(--chart-5))',
+                          'hsl(var(--muted-foreground))',
+                        ];
+                        return (
+                          <span
+                            key={h.assetId}
+                            className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
+                            <span className="font-medium">{h.asset?.symbol}</span>
+                            <span className="text-muted-foreground">{h.weight}%</span>
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="flex gap-1.5 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
