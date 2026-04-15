@@ -260,7 +260,7 @@ export default function BacktestsPage() {
                       id="capital"
                       type="number"
                       min="1"
-                      step="100"
+                      step="any"
                       value={initialCapital}
                       onChange={(e) => setInitialCapital(e.target.value)}
                       required
