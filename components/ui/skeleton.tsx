@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 export function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={cn('rounded-md bg-muted/60 animate-pulse', className)} />
+    <div className={cn('rounded-lg bg-muted/60 animate-pulse', className)} />
   );
 }
 
@@ -13,7 +13,7 @@ export function TableRowSkeleton({ cols = 4 }: { cols?: number }) {
         <div
           key={i}
           className={cn(
-            'h-3.5 rounded bg-muted/60 animate-pulse',
+            'h-3.5 rounded-lg bg-muted/60 animate-pulse',
             i === 0 ? 'w-24' : i === cols - 1 ? 'w-16' : 'w-20'
           )}
         />
@@ -24,13 +24,13 @@ export function TableRowSkeleton({ cols = 4 }: { cols?: number }) {
 
 export function CardSkeleton({ lines = 3 }: { lines?: number }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-5 space-y-3">
-      <div className="h-4 w-32 rounded bg-muted/60 animate-pulse" />
+    <div className="rounded-xl border border-border/60 bg-card p-6 space-y-3">
+      <div className="h-4 w-32 rounded-lg bg-muted/60 animate-pulse" />
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
           className={cn(
-            'h-3 rounded bg-muted/60 animate-pulse',
+            'h-3 rounded-lg bg-muted/60 animate-pulse',
             i === lines - 1 ? 'w-3/4' : 'w-full'
           )}
         />
@@ -43,23 +43,23 @@ export function MetricGridSkeleton() {
   return (
     <div className="space-y-3">
       <div>
-        <div className="h-2.5 w-14 rounded bg-muted/60 animate-pulse mb-2" />
+        <div className="h-2.5 w-14 rounded-lg bg-muted/60 animate-pulse mb-2" />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card px-4 py-3 space-y-2">
-              <div className="h-2.5 w-16 rounded bg-muted/60 animate-pulse" />
-              <div className="h-5 w-20 rounded bg-muted/60 animate-pulse" />
+            <div key={i} className="rounded-xl border border-border/60 bg-card px-4 py-3 space-y-2">
+              <div className="h-2.5 w-16 rounded-lg bg-muted/60 animate-pulse" />
+              <div className="h-5 w-20 rounded-lg bg-muted/60 animate-pulse" />
             </div>
           ))}
         </div>
       </div>
       <div>
-        <div className="h-2.5 w-10 rounded bg-muted/60 animate-pulse mb-2" />
+        <div className="h-2.5 w-10 rounded-lg bg-muted/60 animate-pulse mb-2" />
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-lg border border-border bg-card px-4 py-3 space-y-2">
-              <div className="h-2.5 w-16 rounded bg-muted/60 animate-pulse" />
-              <div className="h-5 w-20 rounded bg-muted/60 animate-pulse" />
+            <div key={i} className="rounded-xl border border-border/60 bg-card px-4 py-3 space-y-2">
+              <div className="h-2.5 w-16 rounded-lg bg-muted/60 animate-pulse" />
+              <div className="h-5 w-20 rounded-lg bg-muted/60 animate-pulse" />
             </div>
           ))}
         </div>
