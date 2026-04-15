@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  CartesianGrid,
 } from 'recharts';
 
 interface ComparisonDataPoint {
@@ -24,6 +25,7 @@ export function ComparisonChart({ data, lines }: ComparisonChartProps) {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
         <XAxis
           dataKey="date"
           axisLine={false}

@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  CartesianGrid,
 } from 'recharts';
 
 interface DrawdownChartProps {
@@ -17,6 +18,7 @@ export function DrawdownChart({ data }: DrawdownChartProps) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
         <defs>
           <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.12} />

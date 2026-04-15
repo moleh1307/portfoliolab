@@ -8,6 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Area,
+  CartesianGrid,
 } from 'recharts';
 
 interface PortfolioValueChartProps {
@@ -18,6 +19,7 @@ export function PortfolioValueChart({ data }: PortfolioValueChartProps) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 4 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.5} />
         <XAxis
           dataKey="date"
           axisLine={false}

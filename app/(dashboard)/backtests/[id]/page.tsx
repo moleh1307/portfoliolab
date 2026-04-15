@@ -105,14 +105,18 @@ export default function BacktestDetailPage() {
 
 if (isLoading) {
     return (
-      <div className="space-y-6 pt-16">
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-1.5 w-1.5 rounded-full" />
+        </div>
         <MetricGridSkeleton />
         <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-if (error || !backtest) {
+  if (error || !backtest) {
     return (
       <div className="space-y-4">
         <Button variant="ghost" size="sm" className="-ml-2 text-[13px]" onClick={() => router.push('/backtests')}>
@@ -121,14 +125,14 @@ if (error || !backtest) {
           </svg>
           Back
         </Button>
-<div className="rounded-lg border border-dashed border-border py-16 text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
-                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-            </div>
-            <p className="text-[13px] text-muted-foreground">{error || 'Backtest not found'}</p>
+        <div className="rounded-lg border border-dashed border-border py-16 text-center">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+              <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
           </div>
+          <p className="text-[13px] text-muted-foreground">{error || 'Backtest not found'}</p>
+        </div>
       </div>
     );
   }
@@ -292,7 +296,7 @@ if (error || !backtest) {
             </thead>
             <tbody>
               {backtest.portfolio.holdings.map((holding) => (
-                <tr key={holding.assetId} className="border-b border-border/40 last:border-0">
+                <tr key={holding.assetId} className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/20">
                   <td className="py-2.5">
                     <span className="font-mono font-medium text-[13px]">{holding.asset.symbol}</span>
                     {holding.asset.displayName && (
@@ -334,7 +338,7 @@ if (error || !backtest) {
               </thead>
               <tbody>
                 {(showAllReturns ? backtest.dataPoints : backtest.dataPoints.slice(-30)).map((dp) => (
-                  <tr key={dp.id} className="border-b border-border/40 last:border-0">
+                  <tr key={dp.id} className="border-b border-border/40 last:border-0 transition-colors hover:bg-muted/20">
                     <td className="py-2 font-mono text-xs tabular-nums">{new Date(dp.date).toLocaleDateString()}</td>
                     <td className="py-2 text-right font-mono text-xs tabular-nums">
                       ${dp.portfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}

@@ -268,14 +268,25 @@ export default function PortfoliosPage() {
                     )}
 
                     {holdings.length > 0 && (
-                      <div className="flex items-center justify-between pt-2 border-t border-border/60">
-                        <span className="text-[13px] font-medium">Total</span>
-                        <span className={`text-[13px] font-mono font-semibold tabular-nums ${
-                          weightValid ? 'text-positive' : 'text-negative'
-                        }`}>
-                          {totalWeight.toFixed(2)}%
-                        </span>
-                      </div>
+                      <>
+                        <div className="flex h-1 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(totalWeight, 100)}%`,
+                              backgroundColor: weightValid ? 'hsl(var(--positive))' : totalWeight > 100 ? 'hsl(var(--negative))' : 'hsl(var(--muted-foreground))',
+                            }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[13px] font-medium">Total</span>
+                          <span className={`text-[13px] font-mono font-semibold tabular-nums ${
+                            weightValid ? 'text-positive' : 'text-negative'
+                          }`}>
+                            {totalWeight.toFixed(2)}%
+                          </span>
+                        </div>
+                      </>
                     )}
 
                     {!weightValid && holdings.length > 0 && (
