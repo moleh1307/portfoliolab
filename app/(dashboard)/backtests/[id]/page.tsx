@@ -56,7 +56,7 @@ interface SummaryMetrics {
 
 function MetricTile({ label, value, positive, subtext }: { label: string; value: string; positive?: boolean; subtext?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card px-4 py-3">
+    <div className="rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:bg-muted/20">
       <p className="metric-label mb-1.5">{label}</p>
       <p className={`metric-value ${positive !== undefined ? (positive ? 'text-positive' : 'text-negative') : ''}`}>
         {value}

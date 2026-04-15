@@ -179,15 +179,41 @@ export default function DatasetsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="csvFile">CSV File</Label>
-                <Input
-                  id="csvFile"
-                  type="file"
-                  accept=".csv"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  disabled={isUploading}
-                />
+                <Label>CSV File</Label>
+                <label
+                  htmlFor="csvFile"
+                  className="flex flex-col items-center justify-center h-[120px] rounded-lg border-2 border-dashed border-border/60 bg-muted/20 cursor-pointer transition-colors hover:bg-muted/30 hover:border-border"
+                >
+                  {fileName ? (
+                    <div className="text-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-1 text-positive">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <p className="text-[13px] font-medium text-foreground">{fileName}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Click to change</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-1 text-muted-foreground">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <p className="text-[13px] text-muted-foreground">
+                        Click to select <span className="text-foreground font-medium">.csv</span> file
+                      </p>
+                    </div>
+                  )}
+                  <input
+                    id="csvFile"
+                    type="file"
+                    accept=".csv"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
               </div>
             </div>
 
