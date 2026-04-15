@@ -8,7 +8,9 @@ import { MetricGridSkeleton, Skeleton } from '@/components/ui/skeleton';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { PortfolioValueChart } from '@/components/charts/portfolio-value-chart';
 import { CumulativeReturnChart } from '@/components/charts/cumulative-return-chart';
+import { ComparisonChart } from '@/components/charts/comparison-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
+import { MonthlyReturnsHeatmap } from '@/components/charts/monthly-returns-heatmap';
 import { useToast } from '@/components/ui/toast';
 import { confirmDialog } from '@/components/ui/alert-dialog';
 
@@ -18,6 +20,7 @@ interface BacktestPoint {
   portfolioValue: number;
   portfolioReturn: number;
   drawdown: number;
+  benchmarkValue: number | null;
 }
 
 interface Holding {
@@ -32,10 +35,17 @@ interface Portfolio {
   holdings: Holding[];
 }
 
+interface BenchmarkAsset {
+  id: string;
+  symbol: string;
+  displayName: string | null;
+}
+
 interface Backtest {
   id: string;
   portfolioId: string;
   portfolio: Portfolio;
+  benchmarkAsset: BenchmarkAsset | null;
   startDate: string;
   endDate: string;
   rebalanceFrequency: string;
@@ -51,10 +61,28 @@ interface SummaryMetrics {
   annualizedReturn: number;
   annualizedVolatility: number;
   sharpeRatio: number;
+  sortinoRatio: number;
+  calmarRatio: number;
   maxDrawdown: number;
+  maxDrawdownDays: number;
   bestDay: number;
   worstDay: number;
   numberOfObservations: number;
+  winRate: number;
+  profitFactor: number;
+  skewness: number;
+  kurtosis: number;
+  valueAtRisk95: number;
+  conditionalVaR95: number;
+  ulcerIndex: number;
+  recoveryFactor: number;
+  benchmarkReturn?: number;
+  excessReturn?: number;
+  beta?: number;
+  alpha?: number;
+  trackingError?: number;
+  informationRatio?: number;
+  correlation?: number;
 }
 
 function MetricTile({ label, value, positive, subtext }: { label: string; value: string; positive?: boolean; subtext?: string }) {
@@ -162,15 +190,41 @@ export default function BacktestDetailPage() {
   }
 
   const metrics = formatMetrics(backtest.summaryMetrics);
+  const hasBenchmark = backtest.benchmarkAsset && backtest.dataPoints.some(dp => dp.benchmarkValue != null);
   const chartData = backtest.dataPoints.map((dp) => ({
     date: new Date(dp.date).toISOString().split('T')[0],
     value: dp.portfolioValue,
     cumulativeReturn: (dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital,
+    benchmarkReturn: dp.benchmarkValue != null ? (dp.benchmarkValue - backtest.initialCapital) / backtest.initialCapital : 0,
     drawdown: dp.drawdown,
   }));
 
   const totalReturnPct = metrics ? metrics.totalReturn * 100 : 0;
   const isPositive = totalReturnPct >= 0;
+
+  const monthlyReturns = (() => {
+    const monthlyMap = new Map<string, { startValue: number; endValue: number }>();
+    for (const dp of backtest.dataPoints) {
+      const date = new Date(dp.date);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const existing = monthlyMap.get(key);
+      if (!existing) {
+        monthlyMap.set(key, { startValue: dp.portfolioValue, endValue: dp.portfolioValue });
+      } else {
+        existing.endValue = dp.portfolioValue;
+      }
+    }
+    const results: { year: number; month: number; return: number }[] = [];
+    monthlyMap.forEach((values, key) => {
+      const [yearStr, monthStr] = key.split('-');
+      results.push({
+        year: parseInt(yearStr),
+        month: parseInt(monthStr),
+        return: (values.endValue - values.startValue) / values.startValue,
+      });
+    });
+    return results.sort((a, b) => a.year - b.year || a.month - b.month);
+  })();
 
   return (
     <div className="space-y-6">
@@ -232,6 +286,11 @@ export default function BacktestDetailPage() {
 
       <div className="flex items-center gap-2 -mt-1">
         <h1 className="page-title">{backtest.portfolio.name}</h1>
+        {backtest.benchmarkAsset && (
+          <span className="ml-2 px-2 py-0.5 text-[10px] font-medium bg-muted rounded-full text-muted-foreground">
+            vs {backtest.benchmarkAsset.symbol}
+          </span>
+        )}
       </div>
       <div className="flex items-center gap-2 text-[12px] text-muted-foreground/70 -mt-1">
         <span className="font-mono tabular-nums">
@@ -289,6 +348,53 @@ export default function BacktestDetailPage() {
         </div>
       )}
 
+      {metrics && hasBenchmark && (
+        <div className="rounded-2xl border border-border/50 bg-card overflow-hidden">
+          <div className="px-5 py-3 border-b border-border/40">
+            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              vs {backtest.benchmarkAsset?.symbol ?? 'Benchmark'}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-border/40">
+            <MetricTile
+              label="Excess Return"
+              value={metrics.excessReturn != null ? `${(metrics.excessReturn * 100).toFixed(2)}%` : '—'}
+              positive={metrics.excessReturn != null ? metrics.excessReturn >= 0 : undefined}
+            />
+            <MetricTile
+              label="Alpha"
+              value={metrics.alpha != null ? `${(metrics.alpha * 100).toFixed(2)}%` : '—'}
+              positive={metrics.alpha != null ? metrics.alpha >= 0 : undefined}
+            />
+            <MetricTile
+              label="Beta"
+              value={metrics.beta != null ? metrics.beta.toFixed(2) : '—'}
+            />
+            <MetricTile
+              label="Tracking Error"
+              value={metrics.trackingError != null ? `${(metrics.trackingError * 100).toFixed(2)}%` : '—'}
+            />
+          </div>
+          <div className="border-t border-border/40" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 divide-x divide-border/40">
+            <MetricTile
+              label="Information Ratio"
+              value={metrics.informationRatio != null ? metrics.informationRatio.toFixed(2) : '—'}
+              positive={metrics.informationRatio != null ? metrics.informationRatio >= 0 : undefined}
+            />
+            <MetricTile
+              label="Correlation"
+              value={metrics.correlation != null ? metrics.correlation.toFixed(3) : '—'}
+            />
+            <MetricTile
+              label="Benchmark Return"
+              value={metrics.benchmarkReturn != null ? `${(metrics.benchmarkReturn * 100).toFixed(2)}%` : '—'}
+              positive={metrics.benchmarkReturn != null ? metrics.benchmarkReturn >= 0 : undefined}
+            />
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Portfolio Value</CardTitle>
@@ -304,7 +410,17 @@ export default function BacktestDetailPage() {
             <CardTitle>Cumulative Return</CardTitle>
           </CardHeader>
           <CardContent>
-            <CumulativeReturnChart data={chartData} />
+            {hasBenchmark ? (
+              <ComparisonChart
+                data={chartData}
+                lines={[
+                  { key: 'cumulativeReturn', name: 'Portfolio', color: 'hsl(var(--chart-2))' },
+                  { key: 'benchmarkReturn', name: backtest.benchmarkAsset?.symbol ?? 'Benchmark', color: 'hsl(var(--chart-4))' },
+                ]}
+              />
+            ) : (
+              <CumulativeReturnChart data={chartData} />
+            )}
           </CardContent>
         </Card>
 
@@ -317,6 +433,15 @@ export default function BacktestDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Returns</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <MonthlyReturnsHeatmap data={monthlyReturns} />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

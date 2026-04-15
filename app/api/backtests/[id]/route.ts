@@ -43,6 +43,13 @@ export async function GET(
             },
           },
         },
+        benchmark: {
+          select: {
+            id: true,
+            symbol: true,
+            displayName: true,
+          },
+        },
         dataPoints: {
           orderBy: { date: 'asc' },
         },

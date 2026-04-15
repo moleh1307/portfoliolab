@@ -16,6 +16,12 @@ interface Portfolio {
   holdings: { assetId: string; weight: number; asset: { symbol: string } }[];
 }
 
+interface Asset {
+  id: string;
+  symbol: string;
+  displayName: string | null;
+}
+
 interface Backtest {
   id: string;
   portfolioId: string;
@@ -33,6 +39,7 @@ export default function BacktestsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [backtests, setBacktests] = useState<Backtest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -44,6 +51,7 @@ export default function BacktestsPage() {
   const [endDate, setEndDate] = useState('');
   const [rebalanceFrequency, setRebalanceFrequency] = useState('monthly');
   const [initialCapital, setInitialCapital] = useState('10000');
+  const [benchmarkAssetId, setBenchmarkAssetId] = useState('');
 
   const fetchPortfolios = useCallback(async () => {
     try {
@@ -54,6 +62,18 @@ export default function BacktestsPage() {
       }
     } catch {
       toast('Failed to load portfolios', 'error');
+    }
+  }, [toast]);
+
+  const fetchAssets = useCallback(async () => {
+    try {
+      const response = await fetch('/api/assets');
+      if (response.ok) {
+        const data = await response.json();
+        setAssets(data.assets);
+      }
+    } catch {
+      toast('Failed to load assets', 'error');
     }
   }, [toast]);
 
@@ -70,7 +90,7 @@ export default function BacktestsPage() {
   }, [toast]);
 
   useEffect(() => {
-    Promise.all([fetchPortfolios(), fetchBacktests()]).finally(() => {
+    Promise.all([fetchPortfolios(), fetchBacktests(), fetchAssets()]).finally(() => {
       setIsLoading(false);
     });
   }, [fetchPortfolios, fetchBacktests]);
@@ -81,6 +101,7 @@ export default function BacktestsPage() {
     setEndDate('');
     setRebalanceFrequency('monthly');
     setInitialCapital('10000');
+    setBenchmarkAssetId('');
     setFormError('');
     setShowForm(false);
   };
@@ -122,6 +143,7 @@ export default function BacktestsPage() {
           endDate,
           rebalanceFrequency,
           initialCapital: capital,
+          benchmarkAssetId: benchmarkAssetId || undefined,
         }),
       });
 
@@ -246,6 +268,23 @@ export default function BacktestsPage() {
                       className="font-mono tabular-nums"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="benchmark">Benchmark (optional)</Label>
+                  <Select
+                    id="benchmark"
+                    value={benchmarkAssetId}
+                    onChange={(e) => setBenchmarkAssetId(e.target.value)}
+                    disabled={isRunning}
+                  >
+                    <option value="">No benchmark</option>
+                    {assets.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        {asset.symbol}{asset.displayName ? ` - ${asset.displayName}` : ''}
+                      </option>
+                    ))}
+                  </Select>
                 </div>
 
                 {formError && (

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { DEFAULT_USER_ID } from '@/lib/constants';
-import { runBacktest, type PriceData } from '@/lib/analytics/engine';
+import { runBacktest, runBacktestWithBenchmark, type PriceData } from '@/lib/analytics/engine';
 
 const CreateBacktestSchema = z.object({
   portfolioId: z.string().min(1),
@@ -127,6 +127,24 @@ export async function POST(request: Request) {
       priceMap.set(record.assetId, existing);
     }
 
+    let benchmarkPrices: PriceData[] = [];
+    if (benchmarkAssetId) {
+      const benchmarkRecords = await prisma.priceRecord.findMany({
+        where: {
+          assetId: benchmarkAssetId,
+          date: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        orderBy: { date: 'asc' },
+      });
+      benchmarkPrices = benchmarkRecords.map((r) => ({
+        date: r.date.toISOString().split('T')[0],
+        close: r.close,
+      }));
+    }
+
     const assetPrices = portfolio.holdings.map((h) => ({
       assetId: h.assetId,
       symbol: h.asset.symbol,
@@ -144,7 +162,10 @@ export async function POST(request: Request) {
       rebalanceFrequency: rebalanceFrequency as 'none' | 'monthly' | 'quarterly',
     };
 
-    const result = runBacktest(assetPrices, config);
+    const hasBenchmark = benchmarkPrices.length > 0;
+    const result = hasBenchmark
+      ? runBacktestWithBenchmark(assetPrices, benchmarkPrices, config)
+      : runBacktest(assetPrices, config);
 
     const backtestRun = await prisma.backtestRun.create({
       data: {
@@ -161,13 +182,27 @@ export async function POST(request: Request) {
     });
 
     await prisma.backtestPoint.createMany({
-      data: result.dataPoints.map((dp) => ({
-        backtestRunId: backtestRun.id,
-        date: new Date(dp.date),
-        portfolioValue: dp.value,
-        portfolioReturn: dp.dailyReturn,
-        drawdown: dp.drawdown,
-      })),
+      data: result.dataPoints.map((dp, i) => {
+        const point: {
+          backtestRunId: string;
+          date: Date;
+          portfolioValue: number;
+          portfolioReturn: number;
+          drawdown: number;
+          benchmarkValue?: number;
+        } = {
+          backtestRunId: backtestRun.id,
+          date: new Date(dp.date),
+          portfolioValue: dp.value,
+          portfolioReturn: dp.dailyReturn,
+          drawdown: dp.drawdown,
+        };
+        if (hasBenchmark) {
+          const benchmarkResult = result as typeof result & { benchmarkDataPoints: { value: number }[] };
+          point.benchmarkValue = benchmarkResult.benchmarkDataPoints[i].value;
+        }
+        return point;
+      }),
     });
 
     const backtestWithPoints = await prisma.backtestRun.findUnique({
@@ -177,6 +212,13 @@ export async function POST(request: Request) {
           select: {
             id: true,
             name: true,
+          },
+        },
+        benchmark: {
+          select: {
+            id: true,
+            symbol: true,
+            displayName: true,
           },
         },
         dataPoints: {

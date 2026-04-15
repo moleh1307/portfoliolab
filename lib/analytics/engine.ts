@@ -1,3 +1,9 @@
+export interface BacktestResult {
+  dataPoints: DailyReturn[];
+  summary: SummaryMetrics;
+  config: BacktestConfig;
+}
+
 export interface PriceData {
   date: string;
   close: number;
@@ -32,21 +38,57 @@ export interface DailyReturn {
   drawdown: number;
 }
 
-export interface BacktestResult {
-  dataPoints: DailyReturn[];
-  summary: SummaryMetrics;
-  config: BacktestConfig;
-}
-
 export interface SummaryMetrics {
   totalReturn: number;
   annualizedReturn: number;
   annualizedVolatility: number;
   sharpeRatio: number;
+  sortinoRatio: number;
+  calmarRatio: number;
   maxDrawdown: number;
+  maxDrawdownDays: number;
   bestDay: number;
   worstDay: number;
   numberOfObservations: number;
+  winRate: number;
+  profitFactor: number;
+  skewness: number;
+  kurtosis: number;
+  valueAtRisk95: number;
+  conditionalVaR95: number;
+  ulcerIndex: number;
+  recoveryFactor: number;
+  benchmarkReturn?: number;
+  excessReturn?: number;
+  beta?: number;
+  alpha?: number;
+  trackingError?: number;
+  informationRatio?: number;
+  correlation?: number;
+}
+
+export interface DrawdownEvent {
+  startDate: string;
+  endDate: string;
+  recoveryDate: string | null;
+  depth: number;
+  duration: number;
+  recoveryDays: number | null;
+}
+
+export interface MonthlyReturn {
+  year: number;
+  month: number;
+  return: number;
+}
+
+export interface BenchmarkMetrics {
+  benchmarkReturns: number[];
+  benchmarkTotalReturn: number;
+  benchmarkAnnualizedReturn: number;
+  benchmarkVolatility: number;
+  benchmarkSharpe: number;
+  benchmarkMaxDrawdown: number;
 }
 
 function getDateKey(date: Date): string {
@@ -104,10 +146,281 @@ function computeDailyReturns(
   return returns;
 }
 
+function computeMean(arr: number[]): number {
+  if (arr.length === 0) return 0;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
+function computeStdDev(arr: number[], sample = false): number {
+  if (arr.length < 2) return 0;
+  const mean = computeMean(arr);
+  const variance = arr.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (arr.length - (sample ? 1 : 0));
+  return Math.sqrt(variance);
+}
+
+function computeSkewness(arr: number[]): number {
+  const n = arr.length;
+  if (n < 3) return 0;
+  const mean = computeMean(arr);
+  const std = computeStdDev(arr, true);
+  if (std === 0) return 0;
+  const skew = arr.reduce((sum, v) => sum + ((v - mean) / std) ** 3, 0) * n / ((n - 1) * (n - 2));
+  return skew;
+}
+
+function computeKurtosis(arr: number[]): number {
+  const n = arr.length;
+  if (n < 4) return 0;
+  const mean = computeMean(arr);
+  const std = computeStdDev(arr, true);
+  if (std === 0) return 0;
+  const m4 = arr.reduce((sum, v) => sum + ((v - mean) / std) ** 4, 0) / n;
+  return m4 - 3;
+}
+
+function computeVaR(returns: number[], confidence: number): number {
+  const sorted = [...returns].sort((a, b) => a - b);
+  const index = Math.floor((1 - confidence) * sorted.length);
+  return sorted[Math.max(0, index)];
+}
+
+function computeCVaR(returns: number[], confidence: number): number {
+  const sorted = [...returns].sort((a, b) => a - b);
+  const index = Math.floor((1 - confidence) * sorted.length);
+  const tail = sorted.slice(0, Math.max(1, index + 1));
+  return computeMean(tail);
+}
+
+function computeMaxDrawdown(dataPoints: DailyReturn[]): number {
+  let peak = dataPoints[0]?.value || 0;
+  let maxDrawdown = 0;
+
+  for (const dp of dataPoints) {
+    peak = Math.max(peak, dp.value);
+    const drawdown = (peak - dp.value) / peak;
+    maxDrawdown = Math.max(maxDrawdown, drawdown);
+  }
+
+  return maxDrawdown;
+}
+
+function computeDrawdownEvents(dataPoints: DailyReturn[]): DrawdownEvent[] {
+  if (dataPoints.length === 0) return [];
+
+  const events: DrawdownEvent[] = [];
+  let peak = dataPoints[0].value;
+  let peakDate = dataPoints[0].date;
+  let inDrawdown = false;
+  let currentStart = '';
+  let currentDepth = 0;
+  let currentMaxDepth = 0;
+
+  for (let i = 0; i < dataPoints.length; i++) {
+    const dp = dataPoints[i];
+    if (dp.value > peak) {
+      if (inDrawdown && currentMaxDepth > 0.001) {
+        const startDate = currentStart;
+        const endDate = dataPoints[i - 1]?.date || currentStart;
+        const startIdx = dataPoints.findIndex(d => d.date === startDate);
+        const endIdx = dataPoints.findIndex(d => d.date === endDate);
+        events.push({
+          startDate,
+          endDate,
+          recoveryDate: null,
+          depth: currentMaxDepth,
+          duration: endIdx - startIdx,
+          recoveryDays: null,
+        });
+      }
+      peak = dp.value;
+      peakDate = dp.date;
+      inDrawdown = false;
+      currentMaxDepth = 0;
+      continue;
+    }
+
+    const drawdown = (peak - dp.value) / peak;
+    if (drawdown > 0.001) {
+      if (!inDrawdown) {
+        inDrawdown = true;
+        currentStart = peakDate;
+        currentMaxDepth = drawdown;
+      } else {
+        currentMaxDepth = Math.max(currentMaxDepth, drawdown);
+      }
+    }
+  }
+
+  if (inDrawdown && currentMaxDepth > 0.001) {
+    const endIdx = dataPoints.length - 1;
+    const startIdx = dataPoints.findIndex(d => d.date === currentStart);
+    events.push({
+      startDate: currentStart,
+      endDate: dataPoints[endIdx].date,
+      recoveryDate: null,
+      depth: currentMaxDepth,
+      duration: endIdx - startIdx,
+      recoveryDays: null,
+    });
+  }
+
+  return events.sort((a, b) => b.depth - a.depth);
+}
+
+function computeMaxDrawdownDays(dataPoints: DailyReturn[]): number {
+  if (dataPoints.length === 0) return 0;
+
+  let peak = dataPoints[0].value;
+  let maxDdDays = 0;
+  let ddStart = 0;
+  let inDrawdown = false;
+
+  for (let i = 0; i < dataPoints.length; i++) {
+    const dp = dataPoints[i];
+    if (dp.value > peak) {
+      if (inDrawdown) {
+        maxDdDays = Math.max(maxDdDays, i - ddStart);
+      }
+      peak = dp.value;
+      inDrawdown = false;
+      continue;
+    }
+
+    const drawdown = (peak - dp.value) / peak;
+    if (drawdown > 0.001 && !inDrawdown) {
+      inDrawdown = true;
+      ddStart = i;
+    }
+  }
+
+  if (inDrawdown) {
+    maxDdDays = Math.max(maxDdDays, dataPoints.length - 1 - ddStart);
+  }
+
+  return maxDdDays;
+}
+
+function computeMonthlyReturns(dataPoints: DailyReturn[]): MonthlyReturn[] {
+  const monthlyMap = new Map<string, { startValue: number; endValue: number }>();
+
+  for (const dp of dataPoints) {
+    const date = new Date(dp.date);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const existing = monthlyMap.get(key);
+    if (!existing) {
+      monthlyMap.set(key, { startValue: dp.value, endValue: dp.value });
+    } else {
+      existing.endValue = dp.value;
+    }
+  }
+
+  const monthlyReturns: MonthlyReturn[] = [];
+  Array.from(monthlyMap.entries()).forEach(([key, values]) => {
+    const [yearStr, monthStr] = key.split('-');
+    monthlyReturns.push({
+      year: parseInt(yearStr),
+      month: parseInt(monthStr),
+      return: (values.endValue - values.startValue) / values.startValue,
+    });
+  });
+
+  return monthlyReturns.sort((a, b) => a.year - b.year || a.month - b.month);
+}
+
+function computeUlcerIndex(dataPoints: DailyReturn[]): number {
+  if (dataPoints.length === 0) return 0;
+  const squaredDrawdowns = dataPoints.map(dp => dp.drawdown ** 2);
+  return Math.sqrt(computeMean(squaredDrawdowns));
+}
+
+function computeBenchmarkMetrics(
+  benchmarkReturns: number[],
+  benchmarkDataPoints: DailyReturn[]
+): BenchmarkMetrics {
+  const n = benchmarkReturns.length;
+  if (n === 0) {
+    return {
+      benchmarkReturns: [],
+      benchmarkTotalReturn: 0,
+      benchmarkAnnualizedReturn: 0,
+      benchmarkVolatility: 0,
+      benchmarkSharpe: 0,
+      benchmarkMaxDrawdown: 0,
+    };
+  }
+
+  const finalValue = benchmarkDataPoints[benchmarkDataPoints.length - 1]?.value || 0;
+  const initialValue = benchmarkDataPoints[0]?.value || 0;
+  const totalReturn = (finalValue - initialValue) / initialValue;
+  const years = n / 252;
+  const annualizedReturn = Math.pow(1 + totalReturn, 1 / years) - 1;
+  const volatility = computeStdDev(benchmarkReturns) * Math.sqrt(252);
+  const sharpe = volatility > 0 ? annualizedReturn / volatility : 0;
+  const maxDD = computeMaxDrawdown(benchmarkDataPoints);
+
+  return {
+    benchmarkReturns,
+    benchmarkTotalReturn: totalReturn,
+    benchmarkAnnualizedReturn: annualizedReturn,
+    benchmarkVolatility: volatility,
+    benchmarkSharpe: sharpe,
+    benchmarkMaxDrawdown: maxDD,
+  };
+}
+
+function computeBenchmarkRelativeMetrics(
+  portfolioReturns: number[],
+  benchmarkReturns: number[],
+  dataPoints: DailyReturn[],
+  benchmarkDataPoints: DailyReturn[]
+): Partial<SummaryMetrics> {
+  const minLength = Math.min(portfolioReturns.length, benchmarkReturns.length);
+  if (minLength === 0) return {};
+
+  const alignedPortfolio = portfolioReturns.slice(0, minLength);
+  const alignedBenchmark = benchmarkReturns.slice(0, minLength);
+
+  const excessReturns = alignedPortfolio.map((r, i) => r - alignedBenchmark[i]);
+  const avgExcess = computeMean(excessReturns);
+  const annualizedExcess = avgExcess * 252;
+  const trackingError = computeStdDev(excessReturns) * Math.sqrt(252);
+  const informationRatio = trackingError > 0 ? annualizedExcess / trackingError : 0;
+
+  const benchMean = computeMean(alignedBenchmark);
+  const benchVar = alignedBenchmark.reduce((s, r) => s + (r - benchMean) ** 2, 0) / minLength;
+  const covar = alignedPortfolio.reduce((s, r, i) => s + (r - computeMean(alignedPortfolio)) * (alignedBenchmark[i] - benchMean), 0) / minLength;
+  const beta = benchVar > 0 ? covar / benchVar : 0;
+
+  const portTotalReturn = (dataPoints[dataPoints.length - 1]?.value - dataPoints[0]?.value) / dataPoints[0]?.value;
+  const benchTotalReturn = (benchmarkDataPoints[benchmarkDataPoints.length - 1]?.value - benchmarkDataPoints[0]?.value) / benchmarkDataPoints[0]?.value;
+  const years = minLength / 252;
+  const portAnn = Math.pow(1 + portTotalReturn, 1 / years) - 1;
+  const benchAnn = Math.pow(1 + benchTotalReturn, 1 / years) - 1;
+  const alpha = portAnn - (0 + beta * (benchAnn - 0));
+
+  const correlation = benchVar > 0 && computeStdDev(alignedPortfolio) > 0
+    ? covar / (computeStdDev(alignedBenchmark) * computeStdDev(alignedPortfolio))
+    : 0;
+
+  return {
+    benchmarkReturn: benchTotalReturn,
+    excessReturn: portTotalReturn - benchTotalReturn,
+    beta,
+    alpha,
+    trackingError,
+    informationRatio,
+    correlation,
+  };
+}
+
 export function runBacktest(
   assetPrices: AssetPrices[],
   config: BacktestConfig
-): BacktestResult {
+): BacktestResult & {
+  summary: SummaryMetrics;
+  drawdownEvents: DrawdownEvent[];
+  monthlyReturns: MonthlyReturn[];
+} {
   const { holdings, startDate, endDate, initialCapital, rebalanceFrequency } = config;
 
   const assetPriceMap = new Map<string, PriceData[]>();
@@ -132,16 +445,18 @@ export function runBacktest(
     return {
       dataPoints: [],
       summary: {
-        totalReturn: 0,
-        annualizedReturn: 0,
-        annualizedVolatility: 0,
-        sharpeRatio: 0,
-        maxDrawdown: 0,
-        bestDay: 0,
-        worstDay: 0,
-        numberOfObservations: 0,
+        totalReturn: 0, annualizedReturn: 0, annualizedVolatility: 0,
+        sharpeRatio: 0, sortinoRatio: 0, calmarRatio: 0,
+        maxDrawdown: 0, maxDrawdownDays: 0,
+        bestDay: 0, worstDay: 0, numberOfObservations: 0,
+        winRate: 0, profitFactor: 0,
+        skewness: 0, kurtosis: 0,
+        valueAtRisk95: 0, conditionalVaR95: 0,
+        ulcerIndex: 0, recoveryFactor: 0,
       },
       config,
+      drawdownEvents: [],
+      monthlyReturns: [],
     };
   }
 
@@ -162,10 +477,7 @@ export function runBacktest(
 
   const dataPoints: DailyReturn[] = [];
   let portfolioValue = initialCapital;
-  let peakValue = initialCapital;
   let prevDate: Date | null = null;
-  let cumulativeReturn = 0;
-
   const dailyReturns: number[] = [];
 
   for (const dateStr of allDates) {
@@ -191,16 +503,14 @@ export function runBacktest(
     }
 
     const currentDate = parseDate(dateStr);
-    const shouldRebalance = isRebalanceDate(prevDate, currentDate, rebalanceFrequency);
 
-    if (shouldRebalance) {
-      portfolioValue = portfolioValue * (1 + portfolioDailyReturn);
-    } else {
-      portfolioValue = portfolioValue * (1 + portfolioDailyReturn);
-    }
+    portfolioValue = portfolioValue * (1 + portfolioDailyReturn);
 
-    cumulativeReturn = (portfolioValue - initialCapital) / initialCapital;
-    peakValue = Math.max(peakValue, portfolioValue);
+    const cumulativeReturn = (portfolioValue - initialCapital) / initialCapital;
+
+    const peakValue = dataPoints.length > 0
+      ? Math.max(...dataPoints.map(dp => dp.value), initialCapital)
+      : Math.max(initialCapital, portfolioValue);
     const drawdown = (peakValue - portfolioValue) / peakValue;
 
     dailyReturns.push(portfolioDailyReturn);
@@ -216,87 +526,148 @@ export function runBacktest(
     prevDate = currentDate;
   }
 
-  const summary = computeSummaryMetrics(dailyReturns, initialCapital, dataPoints[dataPoints.length - 1]?.value || initialCapital);
+  const summary = computeSummaryMetrics(dailyReturns, initialCapital, dataPoints[dataPoints.length - 1]);
+  const drawdownEvents = computeDrawdownEvents(dataPoints);
+  const monthlyReturns = computeMonthlyReturns(dataPoints);
 
   return {
     dataPoints,
     summary,
     config,
+    drawdownEvents,
+    monthlyReturns,
   };
 }
 
 function computeSummaryMetrics(
   dailyReturns: number[],
   initialCapital: number,
-  finalValue: number
+  finalDataPoint: DailyReturn | undefined
 ): SummaryMetrics {
   const n = dailyReturns.length;
+  const finalValue = finalDataPoint?.value || initialCapital;
 
   if (n === 0) {
     return {
-      totalReturn: 0,
-      annualizedReturn: 0,
-      annualizedVolatility: 0,
-      sharpeRatio: 0,
-      maxDrawdown: 0,
-      bestDay: 0,
-      worstDay: 0,
-      numberOfObservations: 0,
+      totalReturn: 0, annualizedReturn: 0, annualizedVolatility: 0,
+      sharpeRatio: 0, sortinoRatio: 0, calmarRatio: 0,
+      maxDrawdown: 0, maxDrawdownDays: 0,
+      bestDay: 0, worstDay: 0, numberOfObservations: 0,
+      winRate: 0, profitFactor: 0,
+      skewness: 0, kurtosis: 0,
+      valueAtRisk95: 0, conditionalVaR95: 0,
+      ulcerIndex: 0, recoveryFactor: 0,
     };
   }
 
   const totalReturn = (finalValue - initialCapital) / initialCapital;
-
-  const avgDailyReturn = dailyReturns.reduce((a, b) => a + b, 0) / n;
-  const variance = dailyReturns.reduce((sum, r) => sum + Math.pow(r - avgDailyReturn, 2), 0) / n;
-  const dailyVolatility = Math.sqrt(variance);
+  const avgDailyReturn = computeMean(dailyReturns);
+  const dailyVolatility = computeStdDev(dailyReturns);
   const annualizedVolatility = dailyVolatility * Math.sqrt(252);
 
   const tradingDaysPerYear = 252;
   const years = n / tradingDaysPerYear;
-  const annualizedReturn = Math.pow(1 + totalReturn, 1 / years) - 1;
+  const annualizedReturn = years > 0 ? Math.pow(1 + totalReturn, 1 / years) - 1 : 0;
 
   const riskFreeRate = 0;
   const sharpeRatio = annualizedVolatility > 0
     ? (annualizedReturn - riskFreeRate) / annualizedVolatility
     : 0;
 
-  const bestDay = n > 0 ? Math.max(...dailyReturns) : 0;
-  const worstDay = n > 0 ? Math.min(...dailyReturns) : 0;
+  const downsideReturns = dailyReturns.filter(r => r < 0);
+  const downsideDeviation = downsideReturns.length > 0
+    ? Math.sqrt(downsideReturns.reduce((s, r) => s + r ** 2, 0) / n) * Math.sqrt(252)
+    : 0;
+  const sortinoRatio = downsideDeviation > 0
+    ? (annualizedReturn - riskFreeRate) / downsideDeviation
+    : 0;
+
+  const maxDrawdown = computeMaxDrawdownForReturns(dailyReturns);
+  const calmarRatio = maxDrawdown > 0 ? annualizedReturn / maxDrawdown : 0;
+
+  const positiveReturns = dailyReturns.filter(r => r > 0);
+  const negativeReturns = dailyReturns.filter(r => r < 0);
+  const winRate = positiveReturns.length / n;
+
+  const grossProfit = positiveReturns.reduce((s, r) => s + r, 0);
+  const grossLoss = Math.abs(negativeReturns.reduce((s, r) => s + r, 0));
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
+
+  const skewness = computeSkewness(dailyReturns);
+  const kurtosis = computeKurtosis(dailyReturns);
+
+  const var95 = computeVaR(dailyReturns, 0.95);
+  const cvar95 = computeCVaR(dailyReturns, 0.95);
+
+  const ulcerIndex = computeUlcerIndexFromReturns(dailyReturns);
+
+  const recoveryFactor = maxDrawdown > 0 ? totalReturn / maxDrawdown : 0;
 
   return {
     totalReturn,
     annualizedReturn,
     annualizedVolatility,
     sharpeRatio,
-    maxDrawdown: 0,
-    bestDay,
-    worstDay,
+    sortinoRatio,
+    calmarRatio,
+    maxDrawdown,
+    maxDrawdownDays: 0,
+    bestDay: Math.max(...dailyReturns),
+    worstDay: Math.min(...dailyReturns),
     numberOfObservations: n,
+    winRate,
+    profitFactor: profitFactor === Infinity ? 999 : profitFactor,
+    skewness,
+    kurtosis,
+    valueAtRisk95: var95,
+    conditionalVaR95: cvar95,
+    ulcerIndex,
+    recoveryFactor,
   };
 }
 
-export function computeMaxDrawdown(dataPoints: DailyReturn[]): number {
-  let peak = dataPoints[0]?.value || 0;
-  let maxDrawdown = 0;
+function computeMaxDrawdownForReturns(returns: number[]): number {
+  let peak = 1;
+  let maxDD = 0;
+  let cumulative = 1;
 
-  for (const dp of dataPoints) {
-    peak = Math.max(peak, dp.value);
-    const drawdown = (peak - dp.value) / peak;
-    maxDrawdown = Math.max(maxDrawdown, drawdown);
+  for (const r of returns) {
+    cumulative *= (1 + r);
+    peak = Math.max(peak, cumulative);
+    const dd = (peak - cumulative) / peak;
+    maxDD = Math.max(maxDD, dd);
   }
 
-  return maxDrawdown;
+  return maxDD;
+}
+
+function computeUlcerIndexFromReturns(returns: number[]): number {
+  let peak = 1;
+  let cumulative = 1;
+  const drawdowns: number[] = [];
+
+  for (const r of returns) {
+    cumulative *= (1 + r);
+    peak = Math.max(peak, cumulative);
+    drawdowns.push((peak - cumulative) / peak);
+  }
+
+  const squaredDD = drawdowns.map(dd => dd ** 2);
+  return Math.sqrt(computeMean(squaredDD));
 }
 
 export function runBacktestWithBenchmark(
   assetPrices: AssetPrices[],
   benchmarkPrices: PriceData[],
   config: BacktestConfig
-): BacktestResult & { benchmarkDataPoints: DailyReturn[] } {
+): BacktestResult & {
+  summary: SummaryMetrics;
+  benchmarkDataPoints: DailyReturn[];
+  benchmarkMetrics: BenchmarkMetrics;
+  drawdownEvents: DrawdownEvent[];
+  monthlyReturns: MonthlyReturn[];
+} {
   const result = runBacktest(assetPrices, config);
-
-  result.summary.maxDrawdown = computeMaxDrawdown(result.dataPoints);
 
   const benchmarkReturns = computeDailyReturns(benchmarkPrices);
   const filteredBenchmarkReturns = benchmarkReturns.filter(
@@ -305,18 +676,15 @@ export function runBacktestWithBenchmark(
 
   let benchmarkValue = config.initialCapital;
   const benchmarkDataPoints: DailyReturn[] = [];
-  let benchmarkPeak = config.initialCapital;
-  let prevDate: Date | null = null;
 
   for (const r of filteredBenchmarkReturns) {
-    const currentDate = parseDate(r.date);
-    const shouldRebalance = isRebalanceDate(prevDate, currentDate, config.rebalanceFrequency);
-
     benchmarkValue = benchmarkValue * (1 + r.dailyReturn);
-
     const cumulativeReturn = (benchmarkValue - config.initialCapital) / config.initialCapital;
-    benchmarkPeak = Math.max(benchmarkPeak, benchmarkValue);
-    const drawdown = (benchmarkPeak - benchmarkValue) / benchmarkPeak;
+
+    const peakValue = benchmarkDataPoints.length > 0
+      ? Math.max(...benchmarkDataPoints.map(dp => dp.value), config.initialCapital)
+      : Math.max(config.initialCapital, benchmarkValue);
+    const drawdown = (peakValue - benchmarkValue) / peakValue;
 
     benchmarkDataPoints.push({
       date: r.date,
@@ -325,12 +693,27 @@ export function runBacktestWithBenchmark(
       cumulativeReturn,
       drawdown,
     });
-
-    prevDate = currentDate;
   }
+
+  const benchmarkMetrics = computeBenchmarkMetrics(
+    filteredBenchmarkReturns.map(r => r.dailyReturn),
+    benchmarkDataPoints
+  );
+
+  const relativeMetrics = computeBenchmarkRelativeMetrics(
+    result.dataPoints.map(dp => dp.dailyReturn),
+    filteredBenchmarkReturns.map(r => r.dailyReturn),
+    result.dataPoints,
+    benchmarkDataPoints
+  );
+
+  Object.assign(result.summary, relativeMetrics);
 
   return {
     ...result,
     benchmarkDataPoints,
+    benchmarkMetrics,
   };
 }
+
+export { computeMonthlyReturns, computeDrawdownEvents, computeMaxDrawdown };
