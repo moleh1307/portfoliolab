@@ -14,7 +14,8 @@ import { MonthlyReturnsHeatmap } from '@/components/charts/monthly-returns-heatm
 import { RollingAnalysisChart } from '@/components/charts/rolling-analysis-chart';
 import { CorrelationMatrixHeatmap } from '@/components/charts/correlation-matrix';
 import { RiskDecompositionChart } from '@/components/charts/risk-decomposition';
-import { computeRollingMetrics, type RollingDataPoint } from '@/lib/analytics/engine';
+import { MonteCarloChart } from '@/components/charts/monte-carlo-chart';
+import { computeRollingMetrics, type RollingDataPoint, runMonteCarlo } from '@/lib/analytics/engine';
 import { useToast } from '@/components/ui/toast';
 import { confirmDialog } from '@/components/ui/alert-dialog';
 
@@ -266,6 +267,14 @@ export default function BacktestDetailPage() {
   const rollingWindow = Math.min(63, Math.max(21, Math.floor(backtest.dataPoints.length / 4)));
   const rollingData: RollingDataPoint[] = computeRollingMetrics(dailyReturnsForRolling, rollingWindow, benchmarkDailyForRolling);
 
+  const monteCarloData = runMonteCarlo(
+    backtest.dataPoints.map(dp => dp.portfolioReturn),
+    backtest.initialCapital,
+    1000,
+    252
+  );
+  const monteCarloChartData = monteCarloData ? { ...monteCarloData, initialCapital: backtest.initialCapital } : null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -513,6 +522,18 @@ export default function BacktestDetailPage() {
           </CardHeader>
           <CardContent>
             <RiskDecompositionChart data={riskDecomposition} />
+          </CardContent>
+        </Card>
+      )}
+
+      {monteCarloChartData && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Monte Carlo Simulation</CardTitle>
+            <p className="text-[11px] text-muted-foreground/60 font-normal">1,000 simulations over 252 trading days</p>
+          </CardHeader>
+          <CardContent>
+            <MonteCarloChart data={monteCarloChartData} />
           </CardContent>
         </Card>
       )}

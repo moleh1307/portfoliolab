@@ -801,6 +801,85 @@ export function computeCorrelationMatrix(
   return { symbols, matrix };
 }
 
+export interface MonteCarloResult {
+  simulations: number[][];
+  percentiles: { p5: number; p25: number; p50: number; p75: number; p95: number }[];
+  finalValueStats: { mean: number; median: number; min: number; max: number; p5: number; p95: number };
+  probabilityOfProfit: number;
+  worstCase: number;
+  bestCase: number;
+}
+
+function boxMullerRandom(): number {
+  let u1 = 0, u2 = 0;
+  while (u1 === 0) u1 = Math.random();
+  while (u2 === 0) u2 = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+}
+
+export function runMonteCarlo(
+  dailyReturns: number[],
+  initialCapital: number,
+  numSimulations: number = 1000,
+  numDays: number = 252
+): MonteCarloResult | null {
+  if (dailyReturns.length < 10) return null;
+
+  const meanReturn = computeMean(dailyReturns);
+  const stdReturn = computeStdDev(dailyReturns);
+
+  const simulations: number[][] = [];
+  const finalValues: number[] = [];
+
+  for (let sim = 0; sim < numSimulations; sim++) {
+    const path: number[] = [initialCapital];
+    let value = initialCapital;
+
+    for (let day = 1; day <= numDays; day++) {
+      const randomReturn = meanReturn + stdReturn * boxMullerRandom();
+      value = value * (1 + randomReturn);
+      path.push(value);
+    }
+
+    simulations.push(path);
+    finalValues.push(value);
+  }
+
+  finalValues.sort((a, b) => a - b);
+
+  const percentileDays: { p5: number; p25: number; p50: number; p75: number; p95: number }[] = [];
+  for (let day = 0; day <= numDays; day++) {
+    const dayValues = simulations.map(s => s[day]).sort((a, b) => a - b);
+    const n = dayValues.length;
+    percentileDays.push({
+      p5: dayValues[Math.floor(n * 0.05)],
+      p25: dayValues[Math.floor(n * 0.25)],
+      p50: dayValues[Math.floor(n * 0.5)],
+      p75: dayValues[Math.floor(n * 0.75)],
+      p95: dayValues[Math.floor(n * 0.95)],
+    });
+  }
+
+  const n = finalValues.length;
+  const profitCount = finalValues.filter(v => v > initialCapital).length;
+
+  return {
+    simulations,
+    percentiles: percentileDays,
+    finalValueStats: {
+      mean: computeMean(finalValues),
+      median: finalValues[Math.floor(n / 2)],
+      min: finalValues[0],
+      max: finalValues[n - 1],
+      p5: finalValues[Math.floor(n * 0.05)],
+      p95: finalValues[Math.floor(n * 0.95)],
+    },
+    probabilityOfProfit: profitCount / n,
+    worstCase: finalValues[Math.floor(n * 0.05)],
+    bestCase: finalValues[Math.floor(n * 0.95)],
+  };
+}
+
 export interface PortfolioAllocation {
   weights: number[];
   symbols: string[];
