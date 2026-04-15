@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Datasets', href: '/datasets' },
   { name: 'Portfolios', href: '/portfolios' },
   { name: 'Backtests', href: '/backtests' },
+  { name: 'Optimizer', href: '/optimizer' },
   { name: 'Compare', href: '/comparison' },
 ];
 

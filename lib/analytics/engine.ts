@@ -801,6 +801,173 @@ export function computeCorrelationMatrix(
   return { symbols, matrix };
 }
 
+export interface PortfolioAllocation {
+  weights: number[];
+  symbols: string[];
+  expectedReturn: number;
+  volatility: number;
+  sharpeRatio: number;
+}
+
+export interface EfficientFrontierPoint {
+  volatility: number;
+  expectedReturn: number;
+  sharpeRatio: number;
+  weights: number[];
+}
+
+export interface OptimizationResult {
+  minimumVariance: PortfolioAllocation;
+  maximumSharpe: PortfolioAllocation;
+  efficientFrontier: EfficientFrontierPoint[];
+  symbols: string[];
+}
+
+function computePortfolioMetrics(
+  weights: number[],
+  expectedReturns: number[],
+  covMatrix: number[][]
+): { expectedReturn: number; volatility: number; sharpeRatio: number } {
+  const n = weights.length;
+  const portReturn = weights.reduce((s, w, i) => s + w * expectedReturns[i], 0);
+  let portVar = 0;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      portVar += weights[i] * weights[j] * covMatrix[i][j];
+    }
+  }
+  const portVol = Math.sqrt(Math.max(0, portVar));
+  const sharpe = portVol > 0 ? portReturn / portVol : 0;
+  return { expectedReturn: portReturn, volatility: portVol, sharpeRatio: sharpe };
+}
+
+function randomWeights(n: number): number[] {
+  const raw = Array.from({ length: n }, () => Math.random());
+  const sum = raw.reduce((a, b) => a + b, 0);
+  return raw.map(w => w / sum);
+}
+
+function perturbWeights(weights: number[], intensity: number): number[] {
+  const n = weights.length;
+  const perturbed = weights.map(w => Math.max(0, w + (Math.random() - 0.5) * intensity));
+  const sum = perturbed.reduce((a, b) => a + b, 0);
+  return perturbed.map(w => w / sum);
+}
+
+export function optimizePortfolio(
+  assetPrices: AssetPrices[],
+  startDate: string,
+  endDate: string,
+  iterations: number = 5000
+): OptimizationResult | null {
+  if (assetPrices.length < 2) return null;
+
+  const returnsMap = new Map<string, number[]>();
+  const symbols: string[] = [];
+
+  for (const ap of assetPrices) {
+    const filtered = ap.prices.filter(p => p.date >= startDate && p.date <= endDate);
+    if (filtered.length < 10) continue;
+
+    const returns: number[] = [];
+    for (let i = 1; i < filtered.length; i++) {
+      returns.push((filtered[i].close - filtered[i - 1].close) / filtered[i - 1].close);
+    }
+    returnsMap.set(ap.symbol, returns);
+    symbols.push(ap.symbol);
+  }
+
+  const n = symbols.length;
+  if (n < 2) return null;
+
+  const minLen = Math.min(...symbols.map(s => returnsMap.get(s)!.length));
+  const returnsMatrix: number[][] = symbols.map(s => returnsMap.get(s)!.slice(0, minLen));
+
+  const expectedReturns = returnsMatrix.map(r => computeMean(r) * 252);
+
+  const covMatrix: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const meanI = computeMean(returnsMatrix[i]);
+      const meanJ = computeMean(returnsMatrix[j]);
+      let cov = 0;
+      for (let k = 0; k < minLen; k++) {
+        cov += (returnsMatrix[i][k] - meanI) * (returnsMatrix[j][k] - meanJ);
+      }
+      covMatrix[i][j] = (cov / (minLen - 1)) * 252;
+    }
+  }
+
+  let minVarWeights = randomWeights(n);
+  let minVarVol = Infinity;
+  let maxSharpeWeights = randomWeights(n);
+  let maxSharpe = -Infinity;
+
+  const frontierPoints: { volatility: number; expectedReturn: number; sharpeRatio: number; weights: number[] }[] = [];
+
+  for (let iter = 0; iter < iterations; iter++) {
+    const weights = randomWeights(n);
+    const metrics = computePortfolioMetrics(weights, expectedReturns, covMatrix);
+
+    if (metrics.volatility < minVarVol) {
+      minVarVol = metrics.volatility;
+      minVarWeights = [...weights];
+    }
+
+    if (metrics.sharpeRatio > maxSharpe) {
+      maxSharpe = metrics.sharpeRatio;
+      maxSharpeWeights = [...weights];
+    }
+
+    if (iter % 50 === 0) {
+      frontierPoints.push({
+        volatility: metrics.volatility,
+        expectedReturn: metrics.expectedReturn,
+        sharpeRatio: metrics.sharpeRatio,
+        weights: [...weights],
+      });
+    }
+
+    const currentWeights = iter % 2 === 0 ? [...minVarWeights] : [...maxSharpeWeights];
+    const perturbed = perturbWeights(currentWeights, 0.3);
+    const pertMetrics = computePortfolioMetrics(perturbed, expectedReturns, covMatrix);
+
+    if (pertMetrics.volatility < minVarVol) {
+      minVarVol = pertMetrics.volatility;
+      minVarWeights = [...perturbed];
+    }
+
+    if (pertMetrics.sharpeRatio > maxSharpe) {
+      maxSharpe = pertMetrics.sharpeRatio;
+      maxSharpeWeights = [...perturbed];
+    }
+  }
+
+  const minVarMetrics = computePortfolioMetrics(minVarWeights, expectedReturns, covMatrix);
+  const maxSharpeMetrics = computePortfolioMetrics(maxSharpeWeights, expectedReturns, covMatrix);
+
+  frontierPoints.sort((a, b) => a.volatility - b.volatility);
+
+  return {
+    minimumVariance: {
+      weights: minVarWeights.map(w => w * 100),
+      symbols,
+      expectedReturn: minVarMetrics.expectedReturn,
+      volatility: minVarMetrics.volatility,
+      sharpeRatio: minVarMetrics.sharpeRatio,
+    },
+    maximumSharpe: {
+      weights: maxSharpeWeights.map(w => w * 100),
+      symbols,
+      expectedReturn: maxSharpeMetrics.expectedReturn,
+      volatility: maxSharpeMetrics.volatility,
+      sharpeRatio: maxSharpeMetrics.sharpeRatio,
+    },
+    efficientFrontier: frontierPoints,
+    symbols,
+  };
+}
+
 export interface RiskDecomposition {
   symbols: string[];
   weights: number[];
