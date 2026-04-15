@@ -11,6 +11,8 @@ import { CumulativeReturnChart } from '@/components/charts/cumulative-return-cha
 import { ComparisonChart } from '@/components/charts/comparison-chart';
 import { DrawdownChart } from '@/components/charts/drawdown-chart';
 import { MonthlyReturnsHeatmap } from '@/components/charts/monthly-returns-heatmap';
+import { RollingAnalysisChart } from '@/components/charts/rolling-analysis-chart';
+import { computeRollingMetrics, type RollingDataPoint } from '@/lib/analytics/engine';
 import { useToast } from '@/components/ui/toast';
 import { confirmDialog } from '@/components/ui/alert-dialog';
 
@@ -225,6 +227,27 @@ export default function BacktestDetailPage() {
     });
     return results.sort((a, b) => a.year - b.year || a.month - b.month);
   })();
+
+  const dailyReturnsForRolling = backtest.dataPoints.map(dp => ({
+    date: dp.date,
+    value: dp.portfolioValue,
+    dailyReturn: dp.portfolioReturn,
+    cumulativeReturn: (dp.portfolioValue - backtest.initialCapital) / backtest.initialCapital,
+    drawdown: dp.drawdown,
+  }));
+
+  const benchmarkDailyForRolling = hasBenchmark
+    ? backtest.dataPoints.map(dp => ({
+        date: dp.date,
+        value: dp.benchmarkValue ?? dp.portfolioValue,
+        dailyReturn: 0,
+        cumulativeReturn: 0,
+        drawdown: 0,
+      }))
+    : undefined;
+
+  const rollingWindow = Math.min(63, Math.max(21, Math.floor(backtest.dataPoints.length / 4)));
+  const rollingData: RollingDataPoint[] = computeRollingMetrics(dailyReturnsForRolling, rollingWindow, benchmarkDailyForRolling);
 
   return (
     <div className="space-y-6">
@@ -442,6 +465,18 @@ export default function BacktestDetailPage() {
           <MonthlyReturnsHeatmap data={monthlyReturns} />
         </CardContent>
       </Card>
+
+      {rollingData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rolling Analysis</CardTitle>
+            <p className="text-[11px] text-muted-foreground/60 font-normal">{rollingWindow}-day rolling window</p>
+          </CardHeader>
+          <CardContent>
+            <RollingAnalysisChart data={rollingData} />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

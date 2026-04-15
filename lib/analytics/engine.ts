@@ -716,4 +716,53 @@ export function runBacktestWithBenchmark(
   };
 }
 
+export interface RollingDataPoint {
+  date: string;
+  rollingReturn: number;
+  rollingVolatility: number;
+  rollingSharpe: number;
+  rollingBeta: number | null;
+}
+
+export function computeRollingMetrics(
+  dataPoints: DailyReturn[],
+  window: number,
+  benchmarkDataPoints?: DailyReturn[]
+): RollingDataPoint[] {
+  if (dataPoints.length < window) return [];
+
+  const results: RollingDataPoint[] = [];
+
+  for (let i = window - 1; i < dataPoints.length; i++) {
+    const windowReturns = dataPoints.slice(i - window + 1, i + 1).map(dp => dp.dailyReturn);
+
+    const cumulativeReturn = windowReturns.reduce((acc, r) => acc * (1 + r), 1) - 1;
+    const annualizedReturn = Math.pow(1 + cumulativeReturn, 252 / window) - 1;
+    const volatility = computeStdDev(windowReturns) * Math.sqrt(252);
+    const sharpe = volatility > 0 ? annualizedReturn / volatility : 0;
+
+    let beta: number | null = null;
+    if (benchmarkDataPoints && benchmarkDataPoints.length > i) {
+      const benchWindowReturns = benchmarkDataPoints.slice(i - window + 1, i + 1).map(dp => dp.dailyReturn);
+      if (benchWindowReturns.length === window) {
+        const benchMean = computeMean(benchWindowReturns);
+        const portMean = computeMean(windowReturns);
+        const benchVar = benchWindowReturns.reduce((s, r) => s + (r - benchMean) ** 2, 0) / window;
+        const covar = windowReturns.reduce((s, r, j) => s + (r - portMean) * (benchWindowReturns[j] - benchMean), 0) / window;
+        beta = benchVar > 0 ? covar / benchVar : 0;
+      }
+    }
+
+    results.push({
+      date: dataPoints[i].date,
+      rollingReturn: annualizedReturn,
+      rollingVolatility: volatility,
+      rollingSharpe: sharpe,
+      rollingBeta: beta,
+    });
+  }
+
+  return results;
+}
+
 export { computeMonthlyReturns, computeDrawdownEvents, computeMaxDrawdown };
